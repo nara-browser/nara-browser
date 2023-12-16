@@ -1666,7 +1666,7 @@ export var UITour = {
         try {
           let shell = aWindow.getShellService();
           if (shell) {
-            shell.setDefaultBrowser(false);
+            shell.setDefaultBrowser(true, false);
           }
         } catch (e) {}
         break;
