@@ -229,6 +229,7 @@ static int64_t PRMJ_Now() {
     // well.
     needsCalibration = true;
   }
+}
 #endif
 
 #if !JS_HAS_INTL_API
