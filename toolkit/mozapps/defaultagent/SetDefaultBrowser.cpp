@@ -9,6 +9,7 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/CmdLineAndEnvUtils.h"
+#include "mozilla/DynamicallyLinkedFunctionPtr.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WindowsVersion.h"
@@ -259,9 +260,18 @@ static bool SetUserChoice(const wchar_t* aExt, const wchar_t* aSid,
                           const wchar_t* aProgID) {
   // This might be slow to query, so do it before generating timestamps and
   // hashes.
+
+  // `GetCurrentPackageFullName` added in Windows 8.
+  DynamicallyLinkedFunctionPtr<decltype(&GetCurrentPackageFullName)>
+      pGetCurrentPackageFullName(L"kernel32.dll",
+                                        "GetCurrentPackageFullName");
+  if (!pGetCurrentPackageFullName) {
+    return false;
+  }
+
   UINT32 pfnLen = 0;
   bool inMsix =
-      GetCurrentPackageFullName(&pfnLen, nullptr) != APPMODEL_ERROR_NO_PACKAGE;
+      pGetCurrentPackageFullName(&pfnLen, nullptr) != APPMODEL_ERROR_NO_PACKAGE;
 
   SYSTEMTIME hashTimestamp;
   ::GetSystemTime(&hashTimestamp);
@@ -400,9 +410,18 @@ nsresult SetDefaultExtensionHandlersUserChoice(
 nsresult SetDefaultExtensionHandlersUserChoiceImpl(
     const wchar_t* aAumi, const wchar_t* const aSid,
     const nsTArray<nsString>& aFileExtensions) {
+
+  // `GetCurrentPackageFullName` added in Windows 8.
+  DynamicallyLinkedFunctionPtr<decltype(&GetCurrentPackageFullName)>
+      pGetCurrentPackageFullName(L"kernel32.dll",
+                                        "GetCurrentPackageFullName");
+  if (!pGetCurrentPackageFullName) {
+    return NS_OK;
+  }
+
   UINT32 pfnLen = 0;
   bool inMsix =
-      GetCurrentPackageFullName(&pfnLen, nullptr) != APPMODEL_ERROR_NO_PACKAGE;
+      pGetCurrentPackageFullName(&pfnLen, nullptr) != APPMODEL_ERROR_NO_PACKAGE;
 
   for (size_t i = 0; i + 1 < aFileExtensions.Length(); i += 2) {
     const wchar_t* extraFileExtension =
