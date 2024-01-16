@@ -22,7 +22,7 @@ MOZ_MACBUNDLE_NAME="Vyvfox.app"
 
 MOZ_SOURCE_REPO=https://github.com/Eclipse-Community/vyvfox
 
-MOZ_APP_VENDOR=K4Sum1
+MOZ_APP_VENDOR=Eclipse
 
 MOZ_APP_CODENAME=vyvfox
 

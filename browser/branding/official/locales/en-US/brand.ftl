@@ -24,4 +24,4 @@
 # remain unchanged across different versions (Nightly, Beta, etc.).
 -brand-product-name = Vyvfox
 -vendor-short-name = Eclipse
-trademarkInfo = { "Mercury logos are copyrights of K4Sum1." }
+trademarkInfo = { "Vyvfox logos are copyrights of K4Sum1." }
