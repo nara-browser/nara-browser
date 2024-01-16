@@ -12,8 +12,8 @@
 !define BrandFullName         "Eclipse Vyvfox"
 !define CompanyName           "Eclipse Community"
 !define URLInfoAbout          "https://eclipse.cx"
-!define URLUpdateInfo         ""
-!define HelpLink              ""
+!define URLUpdateInfo         "https://github.com/Eclipse-Community/vyvfox/releases"
+!define HelpLink              "https://github.com/Eclipse-Community/vyvfox/issues"
 
 ; The OFFICIAL define is a workaround to support different urls for Release and
 ; Beta since they share the same branding when building with other branches that
