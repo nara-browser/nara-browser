@@ -19,6 +19,7 @@
 #include <stdint.h>
 
 #ifdef XP_WIN
+#  include "mozilla/WindowsVersion.h"
 #  include "mozilla/gfx/DeviceManagerDx.h"
 #  include "mozilla/layers/D3D11ShareHandleImage.h"
 #  include "mozilla/layers/D3D11YCbCrImage.h"
@@ -336,6 +337,39 @@ already_AddRefed<VideoData> VideoData::CreateAndCopyData(
   // Currently our decoder only knows how to output to ImageFormat::PLANAR_YCBCR
   // format.
 #if XP_MACOSX
+  // Copy to NV12 format D3D11ShareHandleImage when video overlay could be used
+  // with the video frame
+  if (UseUseNV12ForSoftwareDecodedVideoIfPossible(aAllocator)) {
+    PlanarYCbCrData data = ConstructPlanarYCbCrData(aInfo, aBuffer, aPicture);
+    RefPtr<layers::D3D11ShareHandleImage> d3d11Image =
+        layers::D3D11ShareHandleImage::MaybeCreateNV12ImageAndSetData(
+            aAllocator, aContainer, data);
+    if (d3d11Image) {
+      v->mImage = d3d11Image;
+      perfRecorder.Record();
+      return v.forget();
+    }
+  }
+
+  // We disable this code path on Windows version earlier of Windows 8 due to
+  // intermittent crashes with old drivers. See bug 1405110.
+  // D3D11YCbCrImage can only handle YCbCr images using 3 non-interleaved planes
+  // non-zero mSkip value indicates that one of the plane would be interleaved.
+  if (IsWin8OrLater() && !XRE_IsParentProcess() && aAllocator &&
+      aAllocator->SupportsD3D11() && aBuffer.mPlanes[0].mSkip == 0 &&
+      aBuffer.mPlanes[1].mSkip == 0 && aBuffer.mPlanes[2].mSkip == 0) {
+    RefPtr<layers::D3D11YCbCrImage> d3d11Image = new layers::D3D11YCbCrImage();
+    PlanarYCbCrData data = ConstructPlanarYCbCrData(aInfo, aBuffer, aPicture);
+    if (d3d11Image->SetData(layers::ImageBridgeChild::GetSingleton()
+                                ? layers::ImageBridgeChild::GetSingleton().get()
+                                : aAllocator,
+                            aContainer, data)) {
+      v->mImage = d3d11Image;
+      perfRecorder.Record();
+      return v.forget();
+    }
+  }
+
   if (aAllocator && aAllocator->GetWebRenderCompositorType() !=
                         layers::WebRenderCompositor::SOFTWARE) {
     RefPtr<layers::MacIOSurfaceImage> ioImage =
