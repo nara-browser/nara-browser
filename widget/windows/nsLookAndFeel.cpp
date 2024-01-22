@@ -16,6 +16,9 @@
 #include "mozilla/FontPropertyTypes.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/widget/WinRegistry.h"
+#include "mozilla/WindowsVersion.h"
+#include "gfxFontConstants.h"
+#include "gfxWindowsPlatform.h"
 
 using namespace mozilla;
 using namespace mozilla::widget;
