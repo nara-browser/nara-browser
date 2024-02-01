@@ -789,11 +789,11 @@ void nsHttpHandler::BuildUserAgent() {
   mUserAgent += mProductSub;
 
   bool isFirefox = mAppName.EqualsLiteral("Firefox");
-  if (isFirefox || mCompatFirefoxEnabled) {
+  
     // "Firefox/x.y" (compatibility) app token
     mUserAgent += ' ';
     mUserAgent += mCompatFirefox;
-  }
+
   if (!isFirefox) {
     // App portion
     mUserAgent += ' ';
