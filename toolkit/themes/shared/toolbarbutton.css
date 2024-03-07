@@ -35,12 +35,27 @@ toolbarbutton {
     color: GrayText;
     text-shadow: none;
   }
+  
+@media (-moz-windows-default-theme) {
+  :root[lwtheme-image] toolbarbutton {
+    text-shadow: none;
+  }
+
+  :root[lwtheme-image] toolbarbutton:not([disabled="true"]) {
+    text-shadow: inherit;
+  }
 }
 
 .toolbarbutton-text {
   margin: 0;
   padding: 0;
   vertical-align: middle;
+}
+
+@media (-moz-windows-default-theme: 0) {
+  :root[lwtheme-image] toolbarbutton:not([disabled="true"]) {
+    text-shadow: inherit;
+  }
 }
 
 /* ::::: toolbarbutton menu ::::: */
