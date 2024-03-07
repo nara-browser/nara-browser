@@ -90,6 +90,28 @@ checkbox {
     padding-block: 1px;
     padding-inline: 4px 2px;
   }
+  
+  /* ..... disabled state ..... */
+
+  checkbox[native][disabled="true"] {
+    color: GrayText;
+  }
+
+  @media (-moz-windows-classic) {
+    checkbox[native][disabled="true"] {
+      color: ThreeDShadow;
+      text-shadow: 1px 1px ThreeDHighlight;
+    }
+  }
+
+  /* ::::: checkmark image ::::: */
+
+  .checkbox-check[native] {
+    appearance: auto;
+    -moz-default-appearance: checkbox;
+    align-items: center;
+    margin-inline-end: 5px;
+  }
 }
 
 @media (-moz-platform: macos) {
