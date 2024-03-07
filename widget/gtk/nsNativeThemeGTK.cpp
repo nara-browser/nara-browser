@@ -1185,6 +1185,7 @@ nsNativeThemeGTK::WidgetStateChanged(nsIFrame* aFrame,
       aAppearance == StyleAppearance::Progresschunk ||
       aAppearance == StyleAppearance::ProgressBar ||
       aAppearance == StyleAppearance::Tooltip ||
+      aAppearance == StyleAppearance::Menubar ||
       aAppearance == StyleAppearance::MozWindowDecorations) {
     return NS_OK;
   }
@@ -1287,6 +1288,12 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
     case StyleAppearance::Textarea:
     case StyleAppearance::Range:
     case StyleAppearance::RangeThumb:
+    case StyleAppearance::CheckboxContainer:
+    case StyleAppearance::RadioContainer:
+    case StyleAppearance::CheckboxLabel:
+    case StyleAppearance::RadioLabel:
+    case StyleAppearance::Menuarrow:
+    case StyleAppearance::Radiomenuitem:
     case StyleAppearance::Splitter:
     case StyleAppearance::MozWindowButtonBox:
     case StyleAppearance::MozWindowButtonClose:

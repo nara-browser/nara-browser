@@ -1092,6 +1092,160 @@ void nsNativeThemeCocoa::DrawSearchField(CGContextRef cgContext,
   NS_OBJC_END_TRY_IGNORE_BLOCK;
 }
 
+static const NSSize kCheckmarkSize = NSMakeSize(11, 11);
+static const NSSize kMenuarrowSize = NSMakeSize(9, 10);
+static const NSSize kMenuScrollArrowSize = NSMakeSize(10, 8);
+static NSString* kCheckmarkImage = @"MenuOnState";
+static NSString* kMenuarrowRightImage = @"MenuSubmenu";
+static NSString* kMenuarrowLeftImage = @"MenuSubmenuLeft";
+static NSString* kMenuDownScrollArrowImage = @"MenuScrollDown";
+static NSString* kMenuUpScrollArrowImage = @"MenuScrollUp";
+static const CGFloat kMenuIconIndent = 6.0f;
+
+NSString* nsNativeThemeCocoa::GetMenuIconName(const MenuIconParams& aParams) {
+  switch (aParams.icon) {
+    case MenuIcon::eCheckmark:
+      return kCheckmarkImage;
+    case MenuIcon::eMenuArrow:
+      return aParams.rtl ? kMenuarrowLeftImage : kMenuarrowRightImage;
+    case MenuIcon::eMenuDownScrollArrow:
+      return kMenuDownScrollArrowImage;
+    case MenuIcon::eMenuUpScrollArrow:
+      return kMenuUpScrollArrowImage;
+  }
+}
+
+NSSize nsNativeThemeCocoa::GetMenuIconSize(MenuIcon aIcon) {
+  switch (aIcon) {
+    case MenuIcon::eCheckmark:
+      return kCheckmarkSize;
+    case MenuIcon::eMenuArrow:
+      return kMenuarrowSize;
+    case MenuIcon::eMenuDownScrollArrow:
+    case MenuIcon::eMenuUpScrollArrow:
+      return kMenuScrollArrowSize;
+  }
+}
+
+nsNativeThemeCocoa::MenuIconParams nsNativeThemeCocoa::ComputeMenuIconParams(
+    nsIFrame* aFrame, ElementState aEventState, MenuIcon aIcon) {
+  bool isDisabled = aEventState.HasState(ElementState::DISABLED);
+
+  MenuIconParams params;
+  params.icon = aIcon;
+  params.disabled = isDisabled;
+  params.insideActiveMenuItem = !isDisabled && CheckBooleanAttr(aFrame, nsGkAtoms::menuactive);
+  params.centerHorizontally = true;
+  params.rtl = IsFrameRTL(aFrame);
+  return params;
+}
+
+void nsNativeThemeCocoa::DrawMenuIcon(CGContextRef cgContext, const CGRect& aRect,
+                                      const MenuIconParams& aParams) {
+  NS_OBJC_BEGIN_TRY_IGNORE_BLOCK;
+
+  NSSize size = GetMenuIconSize(aParams.icon);
+
+  // Adjust size and position of our drawRect.
+  CGFloat paddingX = std::max(CGFloat(0.0), aRect.size.width - size.width);
+  CGFloat paddingY = std::max(CGFloat(0.0), aRect.size.height - size.height);
+  CGFloat paddingStartX = std::min(paddingX, kMenuIconIndent);
+  CGFloat paddingEndX = std::max(CGFloat(0.0), paddingX - kMenuIconIndent);
+  CGRect drawRect = CGRectMake(aRect.origin.x + (aParams.centerHorizontally ? ceil(paddingX / 2)
+                                                 : aParams.rtl              ? paddingEndX
+                                                                            : paddingStartX),
+                               aRect.origin.y + ceil(paddingY / 2), size.width, size.height);
+
+  NSString* state;
+  if (aParams.disabled) {
+    state = @"disabled";
+  } else if (aParams.insideActiveMenuItem) {
+    state = @"pressed";
+  } else if (IsDarkAppearance(NSAppearance.currentAppearance)) {
+    // CUIDraw draws the image with a color that's too faint for the dark
+    // appearance. The "pressed" state happens to use white, which looks better
+    // and matches the white text color, so use it instead of "normal".
+    state = @"pressed";
+  } else {
+    state = @"normal";
+  }
+
+  NSString* imageName = GetMenuIconName(aParams);
+
+  RenderWithCoreUI(
+      drawRect, cgContext,
+      [NSDictionary dictionaryWithObjectsAndKeys:@"kCUIBackgroundTypeMenu", @"backgroundTypeKey",
+                                                 imageName, @"imageNameKey", state, @"state",
+                                                 @"image", @"widget", [NSNumber numberWithBool:YES],
+                                                 @"is.flipped", nil]);
+
+#if DRAW_IN_FRAME_DEBUG
+  CGContextSetRGBFillColor(cgContext, 0.0, 0.0, 0.5, 0.25);
+  CGContextFillRect(cgContext, drawRect);
+#endif
+
+  NS_OBJC_END_TRY_IGNORE_BLOCK;
+}
+
+nsNativeThemeCocoa::MenuItemParams nsNativeThemeCocoa::ComputeMenuItemParams(
+    nsIFrame* aFrame, ElementState aEventState, bool aIsChecked) {
+  bool isDisabled = aEventState.HasState(ElementState::DISABLED);
+
+  MenuItemParams params;
+  params.checked = aIsChecked;
+  params.disabled = isDisabled;
+  params.selected = !isDisabled && CheckBooleanAttr(aFrame, nsGkAtoms::menuactive);
+  params.rtl = IsFrameRTL(aFrame);
+  return params;
+}
+
+void nsNativeThemeCocoa::DrawMenuItem(CGContextRef cgContext, const CGRect& inBoxRect,
+                                      const MenuItemParams& aParams) {
+  if (aParams.checked) {
+    MenuIconParams params;
+    params.disabled = aParams.disabled;
+    params.insideActiveMenuItem = aParams.selected;
+    params.rtl = aParams.rtl;
+    params.icon = MenuIcon::eCheckmark;
+    DrawMenuIcon(cgContext, inBoxRect, params);
+  }
+}
+
+void nsNativeThemeCocoa::DrawMenuSeparator(CGContextRef cgContext, const CGRect& inBoxRect,
+                                           const MenuItemParams& aParams) {
+  // Workaround for visual artifacts issues with
+  // HIThemeDrawMenuSeparator on macOS Big Sur.
+  if (nsCocoaFeatures::OnBigSurOrLater()) {
+    CGRect separatorRect = inBoxRect;
+    separatorRect.size.height = 1;
+    separatorRect.size.width -= 42;
+    separatorRect.origin.x += 21;
+    if (!IsDarkAppearance(NSAppearance.currentAppearance)) {
+      // Use transparent black with an alpha similar to the native separator.
+      // The values 231 (menu background) and 205 (separator color) have been
+      // sampled from a window screenshot of a native context menu.
+      CGContextSetRGBFillColor(cgContext, 0.0, 0.0, 0.0, (231 - 205) / 231.0);
+    } else {
+      // Similar to above, use white with an alpha. The values 45 (menu
+      // background) and 81 (separator color) were sampled on macOS 12 with the
+      // "Reduce transparency" system setting turned on.
+      CGContextSetRGBFillColor(cgContext, 1.0, 1.0, 1.0, 1.0 + ((45 - 81) / 45.0));
+    }
+    CGContextFillRect(cgContext, separatorRect);
+    return;
+  }
+
+  ThemeMenuState menuState;
+  if (aParams.disabled) {
+    menuState = kThemeMenuDisabled;
+  } else {
+    menuState = aParams.selected ? kThemeMenuSelected : kThemeMenuActive;
+  }
+
+  HIThemeMenuItemDrawInfo midi = {0, kThemeMenuItemPlain, menuState};
+  HIThemeDrawMenuSeparator(&inBoxRect, &inBoxRect, &midi, cgContext, HITHEME_ORIENTATION);
+}
+
 static bool ShouldUnconditionallyDrawFocusRingIfFocused(nsIFrame* aFrame) {
   // Mac always draws focus rings for textboxes and lists.
   switch (aFrame->StyleDisplay()->EffectiveAppearance()) {
@@ -2192,6 +2346,26 @@ Maybe<nsNativeThemeCocoa::WidgetInfo> nsNativeThemeCocoa::ComputeWidgetInfo(
     case StyleAppearance::Menupopup:
       return Nothing();
 
+    case StyleAppearance::Menuarrow:
+      return Some(
+          WidgetInfo::MenuIcon(ComputeMenuIconParams(aFrame, elementState, MenuIcon::eMenuArrow)));
+
+    case StyleAppearance::Menuitem:
+    case StyleAppearance::Checkmenuitem:
+      return Some(WidgetInfo::MenuItem(ComputeMenuItemParams(
+          aFrame, elementState, aAppearance == StyleAppearance::Checkmenuitem)));
+
+    case StyleAppearance::Menuseparator:
+      return Some(WidgetInfo::MenuSeparator(ComputeMenuItemParams(aFrame, elementState, false)));
+
+    case StyleAppearance::ButtonArrowUp:
+    case StyleAppearance::ButtonArrowDown: {
+      MenuIcon icon = aAppearance == StyleAppearance::ButtonArrowUp
+                          ? MenuIcon::eMenuUpScrollArrow
+                          : MenuIcon::eMenuDownScrollArrow;
+      return Some(WidgetInfo::MenuIcon(ComputeMenuIconParams(aFrame, elementState, icon)));
+    }
+
     case StyleAppearance::Tooltip:
       return Nothing();
 
@@ -2547,6 +2721,21 @@ void nsNativeThemeCocoa::RenderWidget(const WidgetInfo& aWidgetInfo,
         case Widget::eColorFill:
           MOZ_CRASH("already handled in outer switch");
           break;
+        case Widget::eMenuIcon: {
+          MenuIconParams params = aWidgetInfo.Params<MenuIconParams>();
+          DrawMenuIcon(cgContext, macRect, params);
+          break;
+        }
+        case Widget::eMenuItem: {
+          MenuItemParams params = aWidgetInfo.Params<MenuItemParams>();
+          DrawMenuItem(cgContext, macRect, params);
+          break;
+        }
+        case Widget::eMenuSeparator: {
+          MenuItemParams params = aWidgetInfo.Params<MenuItemParams>();
+          DrawMenuSeparator(cgContext, macRect, params);
+          break;
+        }
         case Widget::eCheckbox: {
           CheckboxOrRadioParams params =
               aWidgetInfo.Params<CheckboxOrRadioParams>();
@@ -2699,6 +2888,12 @@ bool nsNativeThemeCocoa::CreateWebRenderCommandsForWidget(
   //  - If the case in DrawWidgetBackground draws something complicated for the
   //    given widget type, return false here.
   switch (aAppearance) {
+    case StyleAppearance::Menuarrow:
+    case StyleAppearance::Menuitem:
+    case StyleAppearance::Checkmenuitem:
+    case StyleAppearance::Menuseparator:
+    case StyleAppearance::ButtonArrowUp:
+    case StyleAppearance::ButtonArrowDown:
     case StyleAppearance::Checkbox:
     case StyleAppearance::Radio:
     case StyleAppearance::Button:
@@ -3165,6 +3360,9 @@ bool nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext,
     case StyleAppearance::MozWindowButtonBox:
     case StyleAppearance::MozWindowTitlebar:
     case StyleAppearance::Menupopup:
+    case StyleAppearance::Menuarrow:
+    case StyleAppearance::Menuitem:
+    case StyleAppearance::Menuseparator:
     case StyleAppearance::Tooltip:
 
     case StyleAppearance::Checkbox:
@@ -3260,6 +3458,9 @@ bool nsNativeThemeCocoa::WidgetAppearanceDependsOnWindowFocus(
   switch (aAppearance) {
     case StyleAppearance::Tabpanels:
     case StyleAppearance::Menupopup:
+    case StyleAppearance::Menuarrow:
+    case StyleAppearance::Menuitem:
+    case StyleAppearance::Menuseparator:
     case StyleAppearance::Tooltip:
     case StyleAppearance::Spinner:
     case StyleAppearance::SpinnerUpbutton:
