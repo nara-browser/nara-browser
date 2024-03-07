@@ -280,6 +280,7 @@ nsLookAndFeel::NativeGetInt(IntID aID, int32_t& aResult) {
       break;
     case IntID::DWMCompositor:
     case IntID::WindowsClassic:
+    case IntID::WindowsDefaultTheme:
       aResult = 0;
       res = NS_ERROR_NOT_IMPLEMENTED;
       break;
