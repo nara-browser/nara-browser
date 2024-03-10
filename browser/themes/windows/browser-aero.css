@@ -339,3 +339,59 @@
     -moz-default-appearance: -moz-win-browsertabbar-toolbox;
   }
 }
+
+/* Allows Aero, shows the Aero Basic blue if on Aero Basic, and matches the Classic grey if on Classic */
+#navigator-toolbox,
+#navigator-toolbox-background {
+     background-color: transparent !important;
+} 
+
+/* Bye bye fog */
+#TabsToolbar {
+      background-image: none !important;
+}
+
+/* Brings back the titlebar buttons on Aero basic and Classic */
+
+.titlebar-close {
+  appearance: -moz-window-button-close;
+  margin-left: -2px;
+}
+
+.titlebar-max {
+  appearance: -moz-window-button-maximize;
+}
+
+.titlebar-min {
+  appearance: -moz-window-button-minimize;
+}
+
+.titlebar-restore {
+  appearance: -moz-window-button-restore;
+}
+
+/* Buttonbox looks sightly too much to the left compared to native ones */
+.titlebar-buttonbox-container {
+  margin-right: -2px !important;
+}
+
+/* Aero Basic: */
+/* They are bigger than the native ones */
+@media (-moz-windows-compositor: 0) {
+.titlebar-button {
+  width: 33px !important;
+  margin-right: 2px !important;
+  height: 5px !important;
+}
+}
+
+/* Windows classic: */
+@media (-moz-windows-classic) {
+.titlebar-button {
+  height: 5px !important;
+  width: 5px !important;
+  margin-right: 2px !important;
+}
+}
+
+
