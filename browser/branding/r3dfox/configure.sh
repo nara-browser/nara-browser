@@ -8,6 +8,8 @@ MOZ_APP_BASENAME="r3dfox"
 
 MOZ_APP_DISPLAYNAME=r3dfox
 
+MOZ_APP_UA_NAME=Firefox
+
 MOZ_APP_PROFILE="Eclipse Community/r3dfox"
 
 MOZ_APP_REMOTINGNAME=com.eclipse.r3dfox
