@@ -187,6 +187,9 @@ nsresult nsLookAndFeel::NativeGetColor(ColorID, ColorScheme, nscolor& aResult) {
     case ColorID::MozMacDisabledtoolbartext:
       aResult = NS_RGB(0x3F, 0x3F, 0x3F);
       break;
+    case ColorID::MozButtondefault:
+      aResult = NS_RGB(0xDC, 0xDC, 0xDC);
+      break;
     case ColorID::MozCellhighlight:
     case ColorID::Selecteditem:
       // For inactive list selection
