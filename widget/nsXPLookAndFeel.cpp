@@ -776,7 +776,6 @@ Maybe<nscolor> nsXPLookAndFeel::GenericDarkColor(ColorID aID) {
     case ColorID::MozComboboxtext:
     case ColorID::MozButtonhovertext:
     case ColorID::MozButtonactivetext:
-    case ColorID::Captiontext:
       color = kWindowText;
       break;
     case ColorID::Buttonshadow:
@@ -788,7 +787,6 @@ Maybe<nscolor> nsXPLookAndFeel::GenericDarkColor(ColorID aID) {
     case ColorID::Graytext:      // opacity: 0.4 of kWindowText blended over the
                              // "Window" background color, which happens to be
                              // the same :-)
-    case ColorID::Inactivecaptiontext:
       color = NS_ComposeColors(kWindowBackground, NS_RGBA(251, 251, 254, 102));
       break;
     case ColorID::MozCellhighlight:
@@ -839,14 +837,6 @@ Maybe<nscolor> nsXPLookAndFeel::GenericDarkColor(ColorID aID) {
       // (browser.active_color.dark). See bug 1755564 for some analysis and
       // other options too.
       color = NS_RGB(0xff, 0x66, 0x66);
-      break;
-    case ColorID::Activeborder:
-    case ColorID::Inactiveborder:
-      color = NS_RGB(57, 57, 57);
-      break;
-    case ColorID::Activecaption:
-    case ColorID::Inactivecaption:
-      color = NS_RGB(28, 27, 34);
       break;
     default:
       return Nothing();
