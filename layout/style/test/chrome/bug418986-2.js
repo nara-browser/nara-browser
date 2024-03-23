@@ -50,10 +50,12 @@ var expected_values = [
 // When the pref is on, they should not match.
 var suppressed_toggles = [
   // Not available on most OSs.
+  //  "-moz-maemo-classic",
   "-moz-scrollbar-end-backward",
   "-moz-scrollbar-end-forward",
   "-moz-scrollbar-start-backward",
   "-moz-scrollbar-start-forward",
+  "-moz-windows-default-theme",
   "-moz-gtk-csd-available",
   "-moz-gtk-csd-minimize-button",
   "-moz-gtk-csd-maximize-button",
