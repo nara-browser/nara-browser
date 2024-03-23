@@ -194,6 +194,9 @@ nsresult nsLookAndFeel::NativeGetColor(ColorID, ColorScheme, nscolor& aResult) {
     case ColorID::MozMacMenuselect:
       aResult = NS_RGB(0xaa, 0xaa, 0xaa);
       break;
+    case ColorID::MozButtondefault:
+      aResult = NS_RGB(0xDC, 0xDC, 0xDC);
+      break;
     case ColorID::MozCellhighlight:
     case ColorID::Selecteditem:
     case ColorID::MozMacSecondaryhighlight:
