@@ -29,14 +29,20 @@ toolbarbutton:where([disabled="true"]) {
   text-shadow: none;
 }
 
-@media not (prefers-contrast) {
+@media (-moz-windows-default-theme) {
   :root[lwtheme-image] toolbarbutton {
     text-shadow: none;
   }
+
+  :root[lwtheme-image] toolbarbutton:not([disabled="true"]) {
+    text-shadow: inherit;
+  }
 }
 
-:root[lwtheme-image] toolbarbutton:not([disabled="true"]) {
-  text-shadow: inherit;
+@media (-moz-windows-default-theme: 0) {
+  :root[lwtheme-image] toolbarbutton:not([disabled="true"]) {
+    text-shadow: inherit;
+  }
 }
 
 /* ::::: toolbarbutton menu ::::: */
