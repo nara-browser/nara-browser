@@ -2651,6 +2651,11 @@ Maybe<nsNativeThemeCocoa::WidgetInfo> nsNativeThemeCocoa::ComputeWidgetInfo(
   NS_OBJC_END_TRY_BLOCK_RETURN(Nothing());
 }
 
+static bool IsWidgetNonNative(StyleAppearance aAppearance) {
+  return nsNativeTheme::IsWidgetScrollbarPart(aAppearance) ||
+         aAppearance == StyleAppearance::FocusOutline;
+}
+
 NS_IMETHODIMP
 nsNativeThemeCocoa::DrawWidgetBackground(gfxContext* aContext, nsIFrame* aFrame,
                                          StyleAppearance aAppearance,
@@ -2659,9 +2664,9 @@ nsNativeThemeCocoa::DrawWidgetBackground(gfxContext* aContext, nsIFrame* aFrame,
                                          DrawOverflow aDrawOverflow) {
   NS_OBJC_BEGIN_TRY_BLOCK_RETURN;
 
-  if (IsWidgetAlwaysNonNative(aFrame, aAppearance)) {
-    return ThemeCocoa::DrawWidgetBackground(aContext, aFrame, aAppearance,
-                                            aRect, aDirtyRect, aDrawOverflow);
+  if (IsWidgetNonNative(aAppearance)) {
+    return ThemeCocoa::DrawWidgetBackground(aContext, aFrame, aAppearance, aRect, aDirtyRect,
+                                            aDrawOverflow);
   }
 
   Maybe<WidgetInfo> widgetInfo = ComputeWidgetInfo(aFrame, aAppearance, aRect);
@@ -2904,9 +2909,9 @@ bool nsNativeThemeCocoa::CreateWebRenderCommandsForWidget(
     const mozilla::layers::StackingContextHelper& aSc,
     mozilla::layers::RenderRootStateManager* aManager, nsIFrame* aFrame,
     StyleAppearance aAppearance, const nsRect& aRect) {
-  if (IsWidgetAlwaysNonNative(aFrame, aAppearance)) {
-    return ThemeCocoa::CreateWebRenderCommandsForWidget(
-        aBuilder, aResources, aSc, aManager, aFrame, aAppearance, aRect);
+  if (IsWidgetNonNative(aAppearance)) {
+    return ThemeCocoa::CreateWebRenderCommandsForWidget(aBuilder, aResources, aSc, aManager, aFrame,
+                                                        aAppearance, aRect);
   }
 
   // This list needs to stay consistent with the list in DrawWidgetBackground.
@@ -3104,13 +3109,10 @@ bool nsNativeThemeCocoa::GetWidgetPadding(nsDeviceContext* aContext,
   return false;
 }
 
-bool nsNativeThemeCocoa::GetWidgetOverflow(nsDeviceContext* aContext,
-                                           nsIFrame* aFrame,
-                                           StyleAppearance aAppearance,
-                                           nsRect* aOverflowRect) {
-  if (IsWidgetAlwaysNonNative(aFrame, aAppearance)) {
-    return ThemeCocoa::GetWidgetOverflow(aContext, aFrame, aAppearance,
-                                         aOverflowRect);
+bool nsNativeThemeCocoa::GetWidgetOverflow(nsDeviceContext* aContext, nsIFrame* aFrame,
+                                           StyleAppearance aAppearance, nsRect* aOverflowRect) {
+  if (IsWidgetNonNative(aAppearance)) {
+    return ThemeCocoa::GetWidgetOverflow(aContext, aFrame, aAppearance, aOverflowRect);
   }
   nsIntMargin overflow;
   switch (aAppearance) {
@@ -3173,7 +3175,7 @@ LayoutDeviceIntSize nsNativeThemeCocoa::GetMinimumWidgetSize(
     StyleAppearance aAppearance) {
   NS_OBJC_BEGIN_TRY_BLOCK_RETURN;
 
-  if (IsWidgetAlwaysNonNative(aFrame, aAppearance)) {
+  if (IsWidgetNonNative(aAppearance)) {
     return ThemeCocoa::GetMinimumWidgetSize(aPresContext, aFrame, aAppearance);
   }
 
@@ -3379,7 +3381,7 @@ nsNativeThemeCocoa::ThemeChanged() {
 bool nsNativeThemeCocoa::ThemeSupportsWidget(nsPresContext* aPresContext,
                                              nsIFrame* aFrame,
                                              StyleAppearance aAppearance) {
-  if (IsWidgetAlwaysNonNative(aFrame, aAppearance)) {
+  if (IsWidgetNonNative(aAppearance)) {
     return ThemeCocoa::ThemeSupportsWidget(aPresContext, aFrame, aAppearance);
   }
   // if this is a dropdown button in a combobox the answer is always no
