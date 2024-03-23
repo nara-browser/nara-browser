@@ -1540,6 +1540,13 @@ pub enum Appearance {
     Range,
     #[parse(condition = "ParserContext::chrome_rules_enabled")]
     RangeThumb,
+	/// The resizer background area in a status bar for the resizer widget in
+    /// the corner of a window.
+    #[parse(condition = "ParserContext::in_ua_or_chrome_sheet")]
+    Resizerpanel,
+    /// The resizer itself.
+    #[parse(condition = "ParserContext::in_ua_or_chrome_sheet")]
+    Resizer,
     /// The scrollbar slider
     #[parse(condition = "ParserContext::chrome_rules_enabled")]
     ScrollbarHorizontal,
@@ -1590,6 +1597,9 @@ pub enum Appearance {
     /// A status bar in a main application window.
     #[parse(condition = "ParserContext::chrome_rules_enabled")]
     Statusbar,
+	/// A single pane of a status bar.
+    #[parse(condition = "ParserContext::in_ua_or_chrome_sheet")]
+    Statusbarpanel,
     /// A single tab in a tab widget.
     #[parse(condition = "ParserContext::chrome_rules_enabled")]
     Tab,
