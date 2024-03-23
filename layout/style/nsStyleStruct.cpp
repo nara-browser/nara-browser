@@ -2966,7 +2966,6 @@ LogicalSide nsStyleText::TextEmphasisSide(WritingMode aWM) const {
 
 nsStyleUI::nsStyleUI()
     : mInert(StyleInert::None),
-      mMozTheme(StyleMozTheme::Auto),
       mUserInput(StyleUserInput::Auto),
       mUserModify(StyleUserModify::ReadOnly),
       mUserFocus(StyleUserFocus::Normal),
@@ -2981,7 +2980,6 @@ nsStyleUI::nsStyleUI()
 
 nsStyleUI::nsStyleUI(const nsStyleUI& aSource)
     : mInert(aSource.mInert),
-      mMozTheme(aSource.mMozTheme),
       mUserInput(aSource.mUserInput),
       mUserModify(aSource.mUserModify),
       mUserFocus(aSource.mUserFocus),
@@ -3047,7 +3045,6 @@ nsChangeHint nsStyleUI::CalcDifference(const nsStyleUI& aNewData) const {
   if (mCaretColor != aNewData.mCaretColor ||
       mAccentColor != aNewData.mAccentColor ||
       mScrollbarColor != aNewData.mScrollbarColor ||
-      mMozTheme != aNewData.mMozTheme ||
       mColorScheme != aNewData.mColorScheme) {
     hint |= nsChangeHint_RepaintFrame;
   }
