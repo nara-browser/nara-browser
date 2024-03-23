@@ -122,6 +122,9 @@ void nsLookAndFeel::RefreshImpl() {
 }
 
 static bool UseNonNativeMenuColors(ColorScheme aScheme) {
+  if (!LookAndFeel::WindowsNonNativeMenusEnabled()) {
+    return false;
+  }
   return LookAndFeel::GetInt(LookAndFeel::IntID::WindowsDefaultTheme) ||
          aScheme == ColorScheme::Dark;
 }
@@ -152,6 +155,9 @@ nsresult nsLookAndFeel::NativeGetColor(ColorID aID, ColorScheme aScheme,
       case ColorID::MozMenubarhovertext:
         if (UseNonNativeMenuColors(aScheme)) {
           return false;
+        }
+        if (!nsUXThemeData::IsAppThemed()) {
+          return nsUXThemeData::AreFlatMenusEnabled();
         }
         [[fallthrough]];
       case ColorID::MozMenuhovertext:
@@ -280,6 +286,10 @@ nsresult nsLookAndFeel::NativeGetColor(ColorID aID, ColorScheme aScheme,
       if (UseNonNativeMenuColors(aScheme)) {
         aColor = kNonNativeMenuText;
         return NS_OK;
+      }
+      if (!nsUXThemeData::IsAppThemed()) {
+        idx = COLOR_MENUTEXT;
+        break;
       }
       [[fallthrough]];
     case ColorID::MozMenuhovertext:
@@ -495,12 +505,23 @@ nsresult nsLookAndFeel::NativeGetInt(IntID aID, int32_t& aResult) {
     case IntID::TreeScrollLinesMax:
       aResult = 3;
       break;
+    case IntID::WindowsClassic:
+      aResult = !nsUXThemeData::IsAppThemed();
+      break;
     case IntID::WindowsDefaultTheme:
       aResult = nsUXThemeData::IsDefaultWindowTheme();
+      break;
+    case IntID::DWMCompositor:
+      aResult = gfxWindowsPlatform::GetPlatform()->DwmCompositionEnabled();
       break;
     case IntID::WindowsAccentColorInTitlebar: {
       aResult = mTitlebarColors.mUseAccent;
     } break;
+    case IntID::WindowsGlass:
+      // Aero Glass is only available prior to Windows 8 when DWM is used.
+      aResult = (gfxWindowsPlatform::GetPlatform()->DwmCompositionEnabled() &&
+                 !IsWin8OrLater());
+      break;
     case IntID::AlertNotificationOrigin:
       aResult = 0;
       {
@@ -908,12 +929,14 @@ void nsLookAndFeel::EnsureInit() {
   }
   mInitialized = true;
 
-  mColorMenuHoverText =
-      ::GetColorFromTheme(eUXMenu, MENU_POPUPITEM, MPI_HOT, TMT_TEXTCOLOR);
-  mColorMediaText =
-      ::GetColorFromTheme(eUXMediaToolbar, TP_BUTTON, TS_NORMAL, TMT_TEXTCOLOR);
-  mColorCommunicationsText = ::GetColorFromTheme(
-      eUXCommunicationsToolbar, TP_BUTTON, TS_NORMAL, TMT_TEXTCOLOR);
+  if (nsUXThemeData::IsAppThemed()) {
+    mColorMenuHoverText =
+        ::GetColorFromTheme(eUXMenu, MENU_POPUPITEM, MPI_HOT, TMT_TEXTCOLOR);
+    mColorMediaText = ::GetColorFromTheme(eUXMediaToolbar, TP_BUTTON, TS_NORMAL,
+                                          TMT_TEXTCOLOR);
+    mColorCommunicationsText = ::GetColorFromTheme(
+        eUXCommunicationsToolbar, TP_BUTTON, TS_NORMAL, TMT_TEXTCOLOR);
+  }
 
   // Fill out the sys color table.
   for (int i = SYS_COLOR_MIN; i <= SYS_COLOR_MAX; ++i) {
