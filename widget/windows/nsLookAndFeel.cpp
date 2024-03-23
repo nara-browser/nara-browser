@@ -402,6 +402,14 @@ nsresult nsLookAndFeel::NativeGetColor(ColorID aID, ColorScheme aScheme,
       // if we've gotten here just return -moz-dialogtext instead
       idx = COLOR_WINDOWTEXT;
       break;
+    case ColorID::MozDialogtext:
+    case ColorID::MozColheadertext:
+    case ColorID::MozColheaderhovertext:
+      idx = COLOR_WINDOWTEXT;
+      break;
+    case ColorID::MozButtondefault:
+      idx = COLOR_3DDKSHADOW;
+      break;
     case ColorID::MozNativehyperlinktext:
       idx = COLOR_HOTLIGHT;
       break;
