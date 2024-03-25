@@ -339,3 +339,9 @@
     -moz-default-appearance: -moz-win-browsertabbar-toolbox;
   }
 }
+
+/* Allows Aero, shows the Aero Basic blue if on Aero Basic, and matches the Classic grey if on Classic */
+#navigator-toolbox,
+#navigator-toolbox-background {
+     background-color: transparent !important;
+} 
