@@ -1748,7 +1748,7 @@ var gMainPane = {
         return;
       }
       try {
-        shellSvc.setDefaultBrowser(false);
+        shellSvc.setDefaultBrowser(true, false);
       } catch (ex) {
         console.error(ex);
         return;
