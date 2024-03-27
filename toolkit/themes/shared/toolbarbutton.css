@@ -20,7 +20,7 @@ toolbarbutton {
     text-shadow: none;
   }
 
-  @media not (prefers-contrast) {
+  @media (-moz-windows-default-theme) {
     :root[lwtheme-image] & {
       text-shadow: none;
     }
