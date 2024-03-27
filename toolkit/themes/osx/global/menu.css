@@ -137,3 +137,12 @@ menulist > menupopup > menuitem::before {
 menulist > menupopup > menuitem:is([checked="true"], [selected="true"])::before {
   visibility: inherit;
 }
+
+/* menuseparator */
+
+menuseparator {
+  appearance: auto;
+  -moz-default-appearance: menuseparator;
+  margin: 5px 0;
+  padding: 1px 0;
+}
