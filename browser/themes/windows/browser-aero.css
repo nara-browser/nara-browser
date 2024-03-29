@@ -280,6 +280,12 @@
     #main-window[sizemode="normal"] #navigator-toolbox:-moz-lwtheme {
       border-top: 1px solid var(--glass-shadow-color);
     }
+
+    /* Allows seeing inactive stuffs on 8 */
+    #TabsToolbar {
+      color: black !important;
+      --toolbarbutton-icon-fill: currentColor !important;
+    }
   }
 
   :root[darkwindowframe="true"]:not(:-moz-window-inactive, :-moz-lwtheme) {
