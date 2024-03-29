@@ -10,6 +10,7 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/CmdLineAndEnvUtils.h"
+#include "mozilla/DynamicallyLinkedFunctionPtr.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/Result.h"
 #include "mozilla/UniquePtr.h"
@@ -683,9 +684,18 @@ function Set-DefaultHandlerRegistry($Path, $ProgID, $Hash) {
 nsresult SetDefaultExtensionHandlersUserChoiceImpl(
     const wchar_t* aAumi, const wchar_t* const aSid,
     const nsTArray<nsString>& aFileExtensions) {
+	
+  // `GetCurrentPackageFullName` added in Windows 8.
+  DynamicallyLinkedFunctionPtr<decltype(&GetCurrentPackageFullName)>
+      pGetCurrentPackageFullName(L"kernel32.dll",
+                                        "GetCurrentPackageFullName");
+  if (!pGetCurrentPackageFullName) {
+    return NS_OK;
+  }
+  
   UINT32 pfnLen = 0;
   bool inMsix =
-      GetCurrentPackageFullName(&pfnLen, nullptr) != APPMODEL_ERROR_NO_PACKAGE;
+      pGetCurrentPackageFullName(&pfnLen, nullptr) != APPMODEL_ERROR_NO_PACKAGE;
 
   if (inMsix) {
     return SetDefaultExtensionHandlersUserChoiceImplMsix(aAumi, aSid,
