@@ -249,7 +249,7 @@
       -moz-default-appearance: -moz-win-borderless-glass;
     }
 
-    /* Allows Aero, shows the Aero Basic blue if on Aero Basic, and matches the Classic grey if on Classic */
+    /* Allows seeing the caption bar on Windows pre-10 */
     #navigator-toolbox,
     #navigator-toolbox-background {
          background-color: transparent !important;
@@ -279,6 +279,12 @@
      * drawing in the titlebar (-moz-windows-accent-color-in-titlebar). */
     #main-window[sizemode="normal"] #navigator-toolbox:-moz-lwtheme {
       border-top: 1px solid var(--glass-shadow-color);
+    }
+
+    /* Allows seeing inactive stuffs on 8 */
+    #TabsToolbar {
+      color: black !important;
+      --toolbarbutton-icon-fill: currentColor !important;
     }
   }
 
