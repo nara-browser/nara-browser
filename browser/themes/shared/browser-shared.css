@@ -40,6 +40,8 @@
 
   --chrome-content-separator-color: ThreeDShadow;
 
+  --panel-separator-color: color-mix(in srgb, currentColor 25%, transparent);
+  --panel-shortcut-color: inherit;
   --tabs-navbar-shadow-size: 1px;
   --tabs-navbar-shadow-color: ThreeDShadow;
 
@@ -117,6 +119,8 @@
   }
 
   @media (prefers-contrast) {
+    --autocomplete-popup-separator-color: color-mix(in srgb, currentColor 86%, transparent);
+    --panel-separator-color: currentColor;
     --urlbar-icon-fill-opacity: 1;
   }
 
