@@ -10,6 +10,7 @@
 
 #include "nsXPLookAndFeel.h"
 #include "gfxFont.h"
+#include "nsIWindowsRegKey.h"
 
 /*
  * Gesture System Metrics
