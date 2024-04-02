@@ -209,7 +209,7 @@ addressbar-locbar-firefox-suggest-learn-more = Learn more
 # Non-sponsored suggestions: on
 # Sponsored suggestions: on
 # Data collection: on
-addressbar-firefox-suggest-info-all = Based on your selection, you’ll receive suggestions from the web, including sponsored sites. We will process your search query data to develop the { -firefox-suggest-brand-name } feature.
+addressbar-firefox-suggest-info-all = Based on your selection, you’ll receive suggestions from the web, including sponsored sites. We will process your search query data to give Mozilla more data.
 
 # Non-sponsored suggestions: on
 # Sponsored suggestions: on
@@ -219,7 +219,7 @@ addressbar-firefox-suggest-info-nonsponsored-sponsored = Based on your selection
 # Non-sponsored suggestions: on
 # Sponsored suggestions: off
 # Data collection: on
-addressbar-firefox-suggest-info-nonsponsored-data = Based on your selection, you’ll receive suggestions from the web, but no sponsored sites. We will process your search query data to develop the { -firefox-suggest-brand-name } feature.
+addressbar-firefox-suggest-info-nonsponsored-data = Based on your selection, you’ll receive suggestions from the web, but no sponsored sites. We will process your search query data to give Mozilla more data.
 
 # Non-sponsored suggestions: on
 # Sponsored suggestions: off
@@ -229,7 +229,7 @@ addressbar-firefox-suggest-info-nonsponsored = Based on your selection, you’ll
 # Non-sponsored suggestions: off
 # Sponsored suggestions: on
 # Data collection: on
-addressbar-firefox-suggest-info-sponsored-data = Based on your selection, you’ll receive sponsored suggestions. We will process your search query data to develop the { -firefox-suggest-brand-name } feature.
+addressbar-firefox-suggest-info-sponsored-data = Based on your selection, you’ll receive sponsored suggestions. We will process your search query data to give Mozilla more data.
 
 # Non-sponsored suggestions: off
 # Sponsored suggestions: on
@@ -239,10 +239,10 @@ addressbar-firefox-suggest-info-sponsored = Based on your selection, you’ll re
 # Non-sponsored suggestions: off
 # Sponsored suggestions: off
 # Data collection: on
-addressbar-firefox-suggest-info-data = Based on your selection, you won’t receive suggestions from the web or sponsored sites. We will process your search query data to develop the { -firefox-suggest-brand-name } feature.
+addressbar-firefox-suggest-info-data = Based on your selection, you won’t receive suggestions from the web or sponsored sites. We will process your search query data to give Mozilla more data.
 
 addressbar-dismissed-suggestions-label = Dismissed suggestions
-addressbar-restore-dismissed-suggestions-description = Restore dismissed suggestions from sponsors and { -brand-short-name }.
+addressbar-restore-dismissed-suggestions-description = Restore dismissed suggestions from sponsors and Mozilla.
 addressbar-restore-dismissed-suggestions-button =
   .label = Restore
 addressbar-restore-dismissed-suggestions-learn-more = Learn more
