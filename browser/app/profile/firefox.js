@@ -1802,7 +1802,6 @@ pref("browser.newtabpage.activity-stream.feeds.telemetry", false);
 
 // User pref to show stories on newtab (feeds.system.topstories has to be set to true as well)
 pref("browser.newtabpage.activity-stream.feeds.section.topstories", false);
-pref("browser.newtabpage.activity-stream.feeds.system.topsites", false);
 pref("browser.newtabpage.activity-stream.feeds.system.topstories", false);
 pref("browser.newtabpage.activity-stream.showSponsored", false);
 pref("browser.newtabpage.activity-stream.showSponsoredTopSites", false);
