@@ -91,8 +91,9 @@ auto nsNativeThemeWin::IsWidgetNonNative(nsIFrame* aFrame,
     return NonNative::No;
   }
 
-  if (aAppearance == StyleAppearance::FocusOutline) {
-    return NonNative::Always;
+  if (aAppearance == StyleAppearance::FocusOutline &&
+      StaticPrefs::widget_ev_native_controls_patch_tooltip_style() == 0) {
+    return NonNative::No;
   }
 
   // We only know how to draw light widgets, so we defer to the non-native
@@ -721,6 +722,7 @@ mozilla::Maybe<nsUXThemeClass> nsNativeThemeWin::GetThemeClass(
     case StyleAppearance::PasswordInput:
     case StyleAppearance::Textfield:
     case StyleAppearance::Textarea:
+    case StyleAppearance::FocusOutline:
       return Some(eUXEdit);
     case StyleAppearance::Tooltip:
       return Some(eUXTooltip);
@@ -950,6 +952,12 @@ nsresult nsNativeThemeWin::GetThemePartAndState(nsIFrame* aFrame,
         aState = TFS_EDITBORDER_NORMAL;
       }
 
+      return NS_OK;
+    }
+    case StyleAppearance::FocusOutline: {
+      // XXX the EDITBORDER values don't respect DTBG_OMITCONTENT
+      aPart = TFP_TEXTFIELD;  // TFP_EDITBORDER_NOSCROLL;
+      aState = TS_FOCUSED;    // TFS_EDITBORDER_FOCUSED;
       return NS_OK;
     }
     case StyleAppearance::Tooltip: {
@@ -1789,6 +1797,18 @@ RENDER_AGAIN:
   } else if (aAppearance == StyleAppearance::Progresschunk) {
     DrawThemedProgressMeter(aFrame, aAppearance, theme, hdc, part, state,
                             &widgetRect, &clipRect);
+  } else if (aAppearance == StyleAppearance::FocusOutline) {
+    // Inflate 'widgetRect' with the focus outline size.
+    LayoutDeviceIntMargin border = GetWidgetBorder(
+        aFrame->PresContext()->DeviceContext(), aFrame, aAppearance);
+    widgetRect.left -= border.left;
+    widgetRect.right += border.right;
+    widgetRect.top -= border.top;
+    widgetRect.bottom += border.bottom;
+
+    DTBGOPTS opts = {sizeof(DTBGOPTS), DTBG_OMITCONTENT | DTBG_CLIPRECT,
+                     clipRect};
+    DrawThemeBackgroundEx(theme, hdc, part, state, &widgetRect, &opts);
   }
   // If part is negative, the element wishes us to not render a themed
   // background, instead opting to be drawn specially below.
@@ -2174,6 +2194,18 @@ bool nsNativeThemeWin::GetWidgetOverflow(nsDeviceContext* aContext,
   }
 #endif
 
+  if (aAppearance == StyleAppearance::FocusOutline) {
+    LayoutDeviceIntMargin border =
+        GetWidgetBorder(aContext, aFrame, aAppearance);
+    int32_t p2a = aContext->AppUnitsPerDevPixel();
+    nsMargin m(NSIntPixelsToAppUnits(border.top, p2a),
+               NSIntPixelsToAppUnits(border.right, p2a),
+               NSIntPixelsToAppUnits(border.bottom, p2a),
+               NSIntPixelsToAppUnits(border.left, p2a));
+    aOverflowRect->Inflate(m);
+    return true;
+  }
+
   return false;
 }
 
@@ -2473,6 +2505,10 @@ bool nsNativeThemeWin::ThemeSupportsWidget(nsPresContext* aPresContext,
   // XXXdwh We can go even further and call the API to ask if support exists for
   // specific widgets.
 
+  if (aAppearance == StyleAppearance::FocusOutline) {
+    return true;
+  }
+
   if (IsWidgetNonNative(aFrame, aAppearance) == NonNative::Always) {
     return Theme::ThemeSupportsWidget(aPresContext, aFrame, aAppearance);
   }
@@ -2695,6 +2731,7 @@ LayoutDeviceIntMargin nsNativeThemeWin::ClassicGetWidgetBorder(
     case StyleAppearance::PasswordInput:
     case StyleAppearance::Textfield:
     case StyleAppearance::Textarea:
+    case StyleAppearance::FocusOutline:
       result.top = result.left = result.bottom = result.right = 2;
       break;
     case StyleAppearance::Statusbarpanel:
@@ -2848,6 +2885,7 @@ LayoutDeviceIntSize nsNativeThemeWin::ClassicGetMinimumWidgetSize(
     case StyleAppearance::Treeview:
     case StyleAppearance::NumberInput:
     case StyleAppearance::PasswordInput:
+    case StyleAppearance::FocusOutline:
     case StyleAppearance::Textfield:
     case StyleAppearance::Textarea:
     case StyleAppearance::Progresschunk:
@@ -3776,6 +3814,7 @@ uint32_t nsNativeThemeWin::GetWidgetNativeDrawingFlags(
     case StyleAppearance::Button:
     case StyleAppearance::NumberInput:
     case StyleAppearance::PasswordInput:
+    case StyleAppearance::FocusOutline:
     case StyleAppearance::Textfield:
     case StyleAppearance::Textarea:
     case StyleAppearance::Menulist:
