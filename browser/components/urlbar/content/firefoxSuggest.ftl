@@ -126,19 +126,19 @@ addressbar-best-match-learn-more = Learn more
 # controls non-sponsored suggestions related to the user's search string.
 addressbar-firefox-suggest-nonsponsored =
   .label = Suggestions from the web
-  .description = Get suggestions from { -brand-product-name } related to your search.
+  .description = Get suggestions from Mozilla related to your search.
 
 # Second Firefox Suggest toggle button main label and description. This toggle
 # controls sponsored suggestions related to the user's search string.
 addressbar-firefox-suggest-sponsored =
   .label = Suggestions from sponsors
-  .description = Support the development of { -brand-short-name } with occasional sponsored suggestions.
+  .description = Support Mozilla with occasional sponsored suggestions.
 
 # Third Firefox Suggest toggle button main label and description. This toggle
 # controls data collection related to the user's search string.
 addressbar-firefox-suggest-data-collection =
-  .label = Improve the { -firefox-suggest-brand-name } experience
-  .description = Help create a richer search experience by allowing { -vendor-short-name } to process your search queries.
+  .label = Mozilla wants more of your data
+  .description = Share search query data with Mozilla to create a richer search experience.
 
 # The "Learn more" link shown in the Firefox Suggest preferences UI.
 addressbar-locbar-firefox-suggest-learn-more = Learn more
@@ -150,7 +150,7 @@ addressbar-locbar-firefox-suggest-learn-more = Learn more
 # Non-sponsored suggestions: on
 # Sponsored suggestions: on
 # Data collection: on
-addressbar-firefox-suggest-info-all = Based on your selection, you’ll receive suggestions from the web, including sponsored sites. We will process your search query data to develop the { -firefox-suggest-brand-name } feature.
+addressbar-firefox-suggest-info-all = Based on your selection, you’ll receive suggestions from the web, including sponsored sites. We will process your search query data to give Mozilla more data.
 
 # Non-sponsored suggestions: on
 # Sponsored suggestions: on
@@ -160,7 +160,7 @@ addressbar-firefox-suggest-info-nonsponsored-sponsored = Based on your selection
 # Non-sponsored suggestions: on
 # Sponsored suggestions: off
 # Data collection: on
-addressbar-firefox-suggest-info-nonsponsored-data = Based on your selection, you’ll receive suggestions from the web, but no sponsored sites. We will process your search query data to develop the { -firefox-suggest-brand-name } feature.
+addressbar-firefox-suggest-info-nonsponsored-data = Based on your selection, you’ll receive suggestions from the web, but no sponsored sites. We will process your search query data to give Mozilla more data.
 
 # Non-sponsored suggestions: on
 # Sponsored suggestions: off
@@ -170,7 +170,7 @@ addressbar-firefox-suggest-info-nonsponsored = Based on your selection, you’ll
 # Non-sponsored suggestions: off
 # Sponsored suggestions: on
 # Data collection: on
-addressbar-firefox-suggest-info-sponsored-data = Based on your selection, you’ll receive sponsored suggestions. We will process your search query data to develop the { -firefox-suggest-brand-name } feature.
+addressbar-firefox-suggest-info-sponsored-data = Based on your selection, you’ll receive sponsored suggestions. We will process your search query data to give Mozilla more data.
 
 # Non-sponsored suggestions: off
 # Sponsored suggestions: on
@@ -180,7 +180,7 @@ addressbar-firefox-suggest-info-sponsored = Based on your selection, you’ll re
 # Non-sponsored suggestions: off
 # Sponsored suggestions: off
 # Data collection: on
-addressbar-firefox-suggest-info-data = Based on your selection, you won’t receive suggestions from the web or sponsored sites. We will process your search query data to develop the { -firefox-suggest-brand-name } feature.
+addressbar-firefox-suggest-info-data = Based on your selection, you won’t receive suggestions from the web or sponsored sites. We will process your search query data to give Mozilla more data.
 
 addressbar-dismissed-suggestions-label = Dismissed suggestions
 addressbar-restore-dismissed-suggestions-description = Restore dismissed suggestions from sponsors and the web.
