@@ -236,7 +236,7 @@
 }
 
 .downloadIconRetry > .button-box > .button-icon {
-  list-style-image: url("chrome://global/skin/icons/reload.svg");
+  list-style-image: url("chrome://global/skin/icons/retry.svg");
 }
 
 .downloadIconSubviewArrow > .button-box > .button-icon {
