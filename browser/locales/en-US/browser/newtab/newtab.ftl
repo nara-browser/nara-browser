@@ -263,8 +263,8 @@ newtab-custom-row-selector =
            *[other] { $num } rows
         }
 newtab-custom-sponsored-sites = Sponsored shortcuts
-newtab-custom-pocket-title = Recommended by { -pocket-brand-name }
-newtab-custom-pocket-subtitle = Exceptional content curated by { -pocket-brand-name }, part of the { -brand-product-name } family
+newtab-custom-pocket-title = Recommended stories
+newtab-custom-pocket-subtitle = Exceptional content curated by Mozilla
 newtab-custom-pocket-sponsored = Sponsored stories
 newtab-custom-pocket-show-recent-saves = Show recent saves
 newtab-custom-recent-title = Recent activity
