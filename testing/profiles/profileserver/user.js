@@ -9,3 +9,5 @@ user_pref("dom.timeout.enable_budget_timer_throttling", false);
 // TODO: Bug 1795750 - Re-enable this pref when we have a new version of the
 // Quitter XPI with a simpler version format.
 user_pref("extensions.webextensions.warnings-as-errors", false);
+// Alex313031: Fix PGO bug
+user_pref("gfx.webrender.software", true);
