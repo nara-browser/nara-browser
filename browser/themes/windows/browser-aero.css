@@ -252,7 +252,7 @@
     /* Allows seeing the caption bar on Windows pre-10 */
     #navigator-toolbox,
     #navigator-toolbox-background {
-         background-color: transparent !important;
+      background-color: transparent;
     }
 
     :root[sizemode="maximized"] .titlebar-buttonbox {
