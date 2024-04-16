@@ -42,6 +42,17 @@
     }
   }
 
+  @media (-moz-windows-classic) {
+    :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar {
+      background-image: linear-gradient(transparent, ActiveCaption);
+      background-size: auto 200%;
+    }
+  
+    :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar:-moz-window-inactive {
+      background-image: linear-gradient(transparent, InactiveCaption);
+    }
+  }
+
   @media (-moz-windows-glass) {
     /* Make the menubar text readable on aero glass (copied from browser-aero.css). */
     #toolbar-menubar {
