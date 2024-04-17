@@ -109,7 +109,6 @@ class gfxConfigManager {
   bool mIsNightly;
   bool mIsEarlyBetaOrEarlier;
   bool mSafeMode;
-  bool mIsWin8Point1OrLater;
   bool mIsWin10OrLater;
   bool mIsWin11OrLater;
 };
