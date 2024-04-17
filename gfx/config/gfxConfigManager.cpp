@@ -60,7 +60,6 @@ void gfxConfigManager::Init() {
 #ifdef XP_WIN
   DeviceManagerDx::Get()->CheckHardwareStretchingSupport(mHwStretchingSupport);
   mScaledResolution = HasScaledResolution();
-  mIsWin8Point1OrLater = IsWin8Point1OrLater();
   mIsWin10OrLater = IsWin10OrLater();
   mIsWin11OrLater = IsWin11OrLater();
   mWrCompositorDCompRequired = true;
@@ -263,10 +262,11 @@ void gfxConfigManager::ConfigureWebRender() {
                                  "FEATURE_FAILURE_DCOMP_PREF_DISABLED"_ns);
   }
 
-  if (!mIsWin8Point1OrLater) {
+  if (!mIsWin10OrLater) {
+    // XXX relax win version to windows 8.
     mFeatureWrDComp->Disable(FeatureStatus::Unavailable,
-                             "Requires Windows 8.1 or later",
-                             "FEATURE_FAILURE_DCOMP_NOT_WIN8.1"_ns);
+                             "Requires Windows 10 or later",
+                             "FEATURE_FAILURE_DCOMP_NOT_WIN10"_ns);
   }
 
   if (!mFeatureGPUProcess->IsEnabled()) {
