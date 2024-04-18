@@ -59,7 +59,6 @@
 #include <textstor.h>
 #include "TSFTextStore.h"
 
-#include <shellscalingapi.h>
 #include <shlobj.h>
 #include <shlwapi.h>
 
