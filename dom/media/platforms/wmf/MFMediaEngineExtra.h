@@ -7,7 +7,6 @@
 
 #include <evr.h>
 #include <mfmediaengine.h>
-#include <mfapi.h>
 
 // Currently, we build with WINVER=0x601 (Win7), which means newer
 // declarations in mfmediaengine.h will not be visible. Also, we don't
