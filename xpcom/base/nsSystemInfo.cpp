@@ -1315,7 +1315,7 @@ nsresult CollectProcessInfo(ProcessInfo& info) {
   return NS_OK;
 }
 
-#if defined(XP_WIN) && (_WIN32_WINNT < 0x0A00) || defined(__MINGW32__)
+#if defined(XP_WIN) && (_WIN32_WINNT < 0x0A00)
 WINBASEAPI
 BOOL WINAPI IsUserCetAvailableInEnvironment(_In_ DWORD UserCetEnvironment);
 
