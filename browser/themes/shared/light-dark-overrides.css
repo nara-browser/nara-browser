@@ -73,6 +73,12 @@
         background: transparent !important;
       }
 
+      /* Allows seeing the caption bar on Windows pre-10 */
+      #navigator-toolbox,
+      #navigator-toolbox-background {
+        background-color: transparent !important;
+      }
+
       /* Remove lwtheme borders from toolbars in non-maximized windows. */
       #toolbar-menubar,
       #TabsToolbar {
