@@ -80,12 +80,12 @@ if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
         "RenderDcompSurfaceTextureHost.h",
     ]
     UNIFIED_SOURCES += [
-        "DCLayerTree.cpp",
-        "RenderCompositorANGLE.cpp",
         "RenderCompositorD3D11SWGL.cpp",
         "RenderD3D11TextureHost.cpp",
     ]
     SOURCES += [
+        "DCLayerTree.cpp",
+        "RenderCompositorANGLE.cpp",
         "RenderDcompSurfaceTextureHost.cpp",
     ]
 

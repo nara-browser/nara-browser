@@ -67,6 +67,7 @@ EXPORTS += [
 ]
 
 EXPORTS.mozilla.gfx += [
+    "AllOfDcomp.h",
     "D3D11Checks.h",
     "DeviceManagerDx.h",
     "DisplayConfigWindows.h",
@@ -249,6 +250,8 @@ elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "uikit":
 elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
     UNIFIED_SOURCES += [
         "D3D11Checks.cpp",
+    ]
+    SOURCES += [
         "DeviceManagerDx.cpp",
     ]
 
