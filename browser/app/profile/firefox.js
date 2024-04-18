@@ -67,9 +67,9 @@ pref("extensions.geckoProfiler.acceptedExtensionIds", "geckoprofiler@mozilla.com
 
 pref("extensions.webextensions.remote", true);
 
-// Require signed add-ons by default
-pref("extensions.langpacks.signatures.required", true);
-pref("xpinstall.signatures.required", true);
+// Dn not require signed add-ons by default
+pref("extensions.langpacks.signatures.required", false);
+pref("xpinstall.signatures.required", false);
 
 // Dictionary download preference
 pref("browser.dictionaries.download.url", "https://addons.mozilla.org/%LOCALE%/firefox/language-tools/");
@@ -2485,7 +2485,7 @@ pref("browser.engagement.sidebar-button.has-used", false);
 pref("browser.engagement.library-button.has-used", false);
 pref("browser.engagement.ctrlTab.has-used", false);
 
-pref("browser.aboutConfig.showWarning", true);
+pref("browser.aboutConfig.showWarning", false);
 
 pref("browser.toolbars.keyboard_navigation", true);
 
