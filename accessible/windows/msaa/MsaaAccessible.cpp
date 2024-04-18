@@ -10,7 +10,6 @@
 #include "ia2AccessibleImage.h"
 #include "ia2AccessibleTable.h"
 #include "ia2AccessibleTableCell.h"
-#include "LocalAccessible-inl.h"
 #include "mozilla/a11y/AccessibleWrap.h"
 #include "mozilla/a11y/Compatibility.h"
 #include "mozilla/a11y/DocAccessibleParent.h"
