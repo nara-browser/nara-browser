@@ -12,6 +12,72 @@
 // This file contains definitions required for things dynamically loaded
 // while building or targetting lower platform versions or lower SDKs.
 
+#if (_WIN32_WINNT < 0x0600)
+typedef struct _STARTUPINFOEXA {
+    STARTUPINFOA StartupInfo;
+    LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList;
+} STARTUPINFOEXA, *LPSTARTUPINFOEXA;
+typedef struct _STARTUPINFOEXW {
+    STARTUPINFOW StartupInfo;
+    LPPROC_THREAD_ATTRIBUTE_LIST lpAttributeList;
+} STARTUPINFOEXW, *LPSTARTUPINFOEXW;
+#ifdef UNICODE
+typedef STARTUPINFOEXW STARTUPINFOEX;
+typedef LPSTARTUPINFOEXW LPSTARTUPINFOEX;
+#else
+typedef STARTUPINFOEXA STARTUPINFOEX;
+typedef LPSTARTUPINFOEXA LPSTARTUPINFOEX;
+#endif // UNICODE
+
+#define PROC_THREAD_ATTRIBUTE_NUMBER    0x0000FFFF
+#define PROC_THREAD_ATTRIBUTE_THREAD    0x00010000  // Attribute may be used with thread creation
+#define PROC_THREAD_ATTRIBUTE_INPUT     0x00020000  // Attribute is input only
+#define PROC_THREAD_ATTRIBUTE_ADDITIVE  0x00040000  // Attribute may be "accumulated," e.g. bitmasks, counters, etc.
+
+#define ProcThreadAttributeValue(Number, Thread, Input, Additive) \
+    (((Number) & PROC_THREAD_ATTRIBUTE_NUMBER) | \
+     ((Thread != FALSE) ? PROC_THREAD_ATTRIBUTE_THREAD : 0) | \
+     ((Input != FALSE) ? PROC_THREAD_ATTRIBUTE_INPUT : 0) | \
+     ((Additive != FALSE) ? PROC_THREAD_ATTRIBUTE_ADDITIVE : 0))
+
+#define ProcThreadAttributeHandleList 2
+
+#define PROC_THREAD_ATTRIBUTE_HANDLE_LIST \
+    ProcThreadAttributeValue (ProcThreadAttributeHandleList, FALSE, TRUE, FALSE)
+
+#define PROCESS_DEP_ENABLE                          0x00000001
+#define PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION     0x00000002
+
+// They dynamically load these, but they still use the functions to describe the
+// function pointers!
+WINBASEAPI
+int
+WINAPI
+GetUserDefaultLocaleName(
+    _Out_writes_(cchLocaleName) LPWSTR lpLocaleName,
+    _In_ int cchLocaleName
+);
+
+WINBASEAPI
+BOOL
+WINAPI
+QueryThreadCycleTime(
+    _In_ HANDLE ThreadHandle,
+    _Out_ PULONG64 CycleTime
+    );
+
+#endif // (_WIN32_WINNT >= 0x0600)
+
+#if (_WIN32_WINNT < 0x0601)
+#define ProcThreadAttributeMitigationPolicy 7
+#define PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY \
+    ProcThreadAttributeValue (ProcThreadAttributeMitigationPolicy, FALSE, TRUE, FALSE)
+
+#define PROCESS_CREATION_MITIGATION_POLICY_DEP_ENABLE            0x01
+#define PROCESS_CREATION_MITIGATION_POLICY_DEP_ATL_THUNK_ENABLE  0x02
+#define PROCESS_CREATION_MITIGATION_POLICY_SEHOP_ENABLE          0x04
+#endif // (_WIN32_WINNT >= 0x0601)
+
 #if (_WIN32_WINNT < 0x0602)
 #define ProcThreadAttributeSecurityCapabilities 9
 #define PROC_THREAD_ATTRIBUTE_SECURITY_CAPABILITIES \
