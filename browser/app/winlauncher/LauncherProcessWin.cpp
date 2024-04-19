@@ -436,38 +436,17 @@ Maybe<int> LauncherMain(int& argc, wchar_t* argv[],
 
   DWORD creationFlags = CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT;
 
-  STARTUPINFOEXW siex;
-  LauncherResult<bool> attrsOk = attrs.AssignTo(siex);
-  if (attrsOk.isErr()) {
-    HandleLauncherError(attrsOk);
-    return Nothing();
-  }
+  STARTUPINFOW si;
+  ZeroMemory(&si, sizeof(STARTUPINFOW));
+  si.cb = sizeof(STARTUPINFOW);
+  si.dwFlags |= STARTF_USESTDHANDLES;
+  si.hStdInput = ::GetStdHandle(STD_INPUT_HANDLE);
+  si.hStdOutput = ::GetStdHandle(STD_OUTPUT_HANDLE);
+  si.hStdError = ::GetStdHandle(STD_ERROR_HANDLE);
 
   BOOL inheritHandles = FALSE;
 
-  if (attrsOk.unwrap()) {
-    creationFlags |= EXTENDED_STARTUPINFO_PRESENT;
-
-    if (attrs.HasInheritableHandles()) {
-      siex.StartupInfo.dwFlags |= STARTF_USESTDHANDLES;
-      siex.StartupInfo.hStdInput = stdHandles[0];
-      siex.StartupInfo.hStdOutput = stdHandles[1];
-      siex.StartupInfo.hStdError = stdHandles[2];
-
-      // Since attrsOk == true, we have successfully set the handle inheritance
-      // whitelist policy, so only the handles added to attrs will be inherited.
-      inheritHandles = TRUE;
-    }
-  }
-
-  // Pass on the path of the shortcut used to launch this process, if any.
-  STARTUPINFOW currentStartupInfo = {.cb = sizeof(STARTUPINFOW)};
-  GetStartupInfoW(&currentStartupInfo);
-  if ((currentStartupInfo.dwFlags & STARTF_TITLEISLINKNAME) &&
-      currentStartupInfo.lpTitle) {
-    siex.StartupInfo.dwFlags |= STARTF_TITLEISLINKNAME;
-    siex.StartupInfo.lpTitle = currentStartupInfo.lpTitle;
-  }
+  //inheritHandles = TRUE;
 
   PROCESS_INFORMATION pi = {};
   BOOL createOk;
@@ -476,11 +455,11 @@ Maybe<int> LauncherMain(int& argc, wchar_t* argv[],
     createOk =
         ::CreateProcessAsUserW(mediumIlToken.get(), argv[0], cmdLine.get(),
                                nullptr, nullptr, inheritHandles, creationFlags,
-                               nullptr, nullptr, &siex.StartupInfo, &pi);
+                               nullptr, nullptr, &si, &pi);
   } else {
     createOk = ::CreateProcessW(argv[0], cmdLine.get(), nullptr, nullptr,
                                 inheritHandles, creationFlags, nullptr, nullptr,
-                                &siex.StartupInfo, &pi);
+                                &si, &pi);
   }
 
   if (!createOk) {
