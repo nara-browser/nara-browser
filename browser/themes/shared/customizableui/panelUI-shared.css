@@ -244,7 +244,7 @@ panelview {
 
 /* Tweaks for menupopups hanging off toolbar buttons to make them feel like panels */
 
-@media (-moz-windows-non-native-menus) {
+@media (-moz-bool-pref: "widget.non-native-theme.enabled") {
   .toolbar-menupopup {
     &,
     menupopup {
@@ -1005,7 +1005,7 @@ panelmultiview[mainViewId="PanelUI-fxa"] #PanelUI-remotetabs-syncnow {
   display: none;
 }
 
-@media (-moz-windows-non-native-menus) {
+@media (-moz-bool-pref: "widget.non-native-theme.enabled") {
   .toolbar-menupopup :is(menu, menuitem) {
     appearance: none;
     margin: var(--arrowpanel-menuitem-margin);
