@@ -5,12 +5,7 @@
 ##Uncomment PGO for release build
 
 #Uncomment for x86 build
-#ac_add_options --target=i686-w64-mingw32
-#ac_add_options --with-toolchain-prefix=i686-w64-mingw32-
-
-#Uncomment for x64 build
-#ac_add_options --target=x86_64-w64-mingw32
-#ac_add_options --with-toolchain-prefix=x86_64-w64-mingw32-
+#ac_add_options --target=i686 
 
 # Build only Mercury
 ac_add_options --enable-application=browser
