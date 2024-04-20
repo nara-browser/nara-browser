@@ -73,7 +73,7 @@ dnl ========================================================
 dnl Special win32 checks
 dnl ========================================================
 
-WINVER=0A00
+WINVER=601
 
 case "$target" in
 *-mingw*)
@@ -140,7 +140,7 @@ case "$target" in
 
     AC_DEFINE_UNQUOTED(WINVER,0x$WINVER)
     AC_DEFINE_UNQUOTED(_WIN32_WINNT,0x$WINVER)
-    AC_DEFINE_UNQUOTED(_WIN32_IE,0x0A00)
+    AC_DEFINE_UNQUOTED(_WIN32_IE,0x0800)
 
     ;;
 esac
