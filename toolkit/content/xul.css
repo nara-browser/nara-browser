@@ -412,13 +412,13 @@ tooltip:not([position]) {
 
 /* Makes InfoBackground and InfoText use proper colors */
 @media (-moz-platform: windows) {
-  @media not (-moz-windows-non-native-menus) {
+  @media not (-moz-bool-pref: "widget.non-native-theme.enabled") {
     tooltip {
       color-scheme: light;
     }
   }
 
-  @media (-moz-windows-non-native-menus) {
+  @media (-moz-bool-pref: "widget.non-native-theme.enabled") {
     tooltip {
       appearance: none;
       border: 1px solid;
