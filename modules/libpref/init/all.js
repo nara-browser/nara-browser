@@ -3484,7 +3484,7 @@ pref("browser.search.update", true);
 pref("browser.search.suggest.enabled", true);
 pref("browser.search.suggest.enabled.private", false);
 pref("browser.search.separatePrivateDefault", true);
-pref("browser.search.separatePrivateDefault.ui.enabled", false);
+pref("browser.search.separatePrivateDefault.ui.enabled", true);
 pref("browser.search.removeEngineInfobar.enabled", true);
 
 // Enables a new search configuration style with no functional changes for the
