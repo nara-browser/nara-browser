@@ -4,14 +4,6 @@
 
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
-/* Accel text */
-
-@media not (prefers-contrast) {
-  menuitem:not([disabled]) > .menu-accel-container > :is(.menu-accel, .menu-iconic-accel) {
-    color: var(--panel-disabled-color);
-  }
-}
-
 /* Scroll buttons */
 
 /* Hide arrow buttons when there's nothing to scroll in that direction */
