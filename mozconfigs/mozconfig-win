@@ -5,7 +5,8 @@
 ##Uncomment PGO for release build
 
 #Uncomment for x86 build
-#ac_add_options --target=i686 
+ac_add_options --target=i686-rust9x-windows-msvc
+ac_add_options --with-toolchain-prefix=i686-rust9x-windows-msvc
 
 # Build only Mercury
 ac_add_options --enable-application=browser
@@ -91,8 +92,8 @@ ac_add_options RUSTC_OPT_LEVEL="3"
 # Enable LTO
 export MOZ_LTO=1
 ac_add_options MOZ_LTO=1
-export MOZ_PGO=1
-ac_add_options MOZ_PGO=1
+#export MOZ_PGO=1
+#ac_add_options MOZ_PGO=1
 
 if test "$GEN_PGO"; then
     ac_add_options --enable-profile-generate
