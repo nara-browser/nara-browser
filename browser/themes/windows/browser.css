@@ -516,3 +516,20 @@ menupopup[touchmode] :is(menu, menuitem, menucaption) {
     background-color: #CC190032 !important;
   }
 }
+
+@media (-moz-bool-pref: "r3dfox.force.transparency") {
+  :root {
+    --lwt-additional-images: none !important;
+    --lwt-header-image: none !important;
+  }
+
+  #navigator-toolbox {
+    background-color: transparent !important;
+    @media (-moz-bool-pref: "r3dfox.less.aero.fog") {
+      background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 40%, transparent) !important;
+    }
+    @media not (-moz-bool-pref: "r3dfox.less.aero.fog") {
+      background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 80%, transparent) !important;
+    }
+  }
+}

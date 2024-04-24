@@ -162,6 +162,11 @@ r3dfox-fog =
 
 r3dfox-fog-desc = This enables or disables caption bar fog completely.
 
+r3dfox-transparency =
+    .label = Force enable caption bar transparency
+
+r3dfox-transparency-desc = Force enables caption bar transparency, may have varying results.
+
 ## General Section - Startup
 
 startup-header = Startup
