@@ -64,6 +64,7 @@ Preferences.addAll([
   { id: "r3dfox.customizations.enabled", type: "bool" },
   { id: "r3dfox.less.aero.fog", type: "bool" },
   { id: "r3dfox.aero.fog", type: "bool" },
+  { id: "r3dfox.force.transparency", type: "bool" },
 
   /* Tab preferences
   Preferences:
