@@ -239,6 +239,9 @@ mio_0_8 = { package = "mio", git = "https://github.com/glandium/mio", rev = "9a2
 # Still waiting for the now-merged <https://github.com/zakarumych/gpu-descriptor/pull/40> to be released.
 gpu-descriptor = { git = "https://github.com/zakarumych/gpu-descriptor", rev = "7b71a4e47c81903ad75e2c53deb5ab1310f6ff4d" }
 
+# add unmerged mime types
+mime_guess = { path = "third_party/rust/mime_guess" }
+
 # Patch mio 0.6 to use winapi 0.3 and miow 0.3, getting rid of winapi 0.2.
 # There is not going to be new version of mio 0.6, mio now being >= 0.7.11.
 [patch.crates-io.mio]
