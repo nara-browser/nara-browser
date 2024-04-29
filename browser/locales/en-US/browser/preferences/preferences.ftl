@@ -150,7 +150,7 @@ r3dfox-native-checkbox-desc = This controls whether the scrollbar, checkboxes, a
 r3dfox-theme =
     .label = Use r3dfox theme styles
 
-r3dfox-theme-desc = Currently this just enables or disables the red caption bar tint in private mode.
+r3dfox-theme-desc = Currently this just enables or disables the red colors in private mode.
 
 r3dfox-less-fog =
     .label = Less intense caption bar fog
