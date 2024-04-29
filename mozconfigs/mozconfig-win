@@ -53,7 +53,6 @@ ac_add_options --with-unsigned-addon-scopes=app,system
 #ac_add_options --enable-nss-mar
 
 # Client settings
-ac_add_options --disable-bits-download
 ac_add_options --disable-backgroundtasks
 ac_add_options --disable-bits-download
 ac_add_options --disable-crashreporter
