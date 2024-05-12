@@ -59,7 +59,7 @@ ac_add_options --disable-crashreporter
 ac_add_options --disable-default-browser-agent
 ac_add_options --disable-eme
 ac_add_options --disable-maintenance-service
-#ac_add_options --disable-notification-server
+ac_add_options --disable-notification-server
 ac_add_options --disable-parental-controls
 ac_add_options --disable-update-agent
 ac_add_options --disable-updater
