@@ -149,7 +149,13 @@
   }
 
   :root[tabsintitlebar] :is(#TabsToolbar, #toolbar-menubar) toolbarbutton:not(:-moz-lwtheme) {
-    color: inherit;
+    color: Captiontext !important;
+    --toolbarbutton-icon-fill: currentColor !important;
+  }
+
+  :root[tabsintitlebar] :is(#TabsToolbar, #toolbar-menubar) toolbarbutton:not(:-moz-lwtheme):-moz-window-inactive {
+    color: Inactivecaptiontext !important;
+    --toolbarbutton-icon-fill: currentColor !important;
   }
 }
 
