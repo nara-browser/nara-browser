@@ -28,7 +28,6 @@
   --arrowpanel-dimmed: color-mix(in srgb, currentColor 17%, transparent);
   --arrowpanel-dimmed-further: color-mix(in srgb, currentColor 30%, transparent);
 
-  --panel-separator-color: color-mix(in srgb, currentColor 25%, transparent);
   --panel-disabled-color: color-mix(in srgb, currentColor 40%, transparent);
 
   --popup-notification-body-width: calc(31em - calc(2 * var(--arrowpanel-padding)));
@@ -65,14 +64,11 @@
   }
 
   @media (prefers-contrast) {
-    /* Reduce the opacity of disabled toolbar buttons in order to increase
+    &:not(:-moz-lwtheme) {
+  /* Reduce the opacity of disabled toolbar buttons in order to increase
        contrast with the enabled state. */
-    --toolbarbutton-disabled-opacity: 0.3;
+      --toolbarbutton-disabled-opacity: 0.3;
 
-    --panel-separator-color: currentColor;
-    --toolbar-field-focus-border-color: var(--focus-outline-color);
-
-    &:not([lwtheme]) {
       --panel-disabled-color: GrayText;
     }
   }
