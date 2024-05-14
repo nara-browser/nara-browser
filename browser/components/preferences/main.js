@@ -58,6 +58,14 @@ Preferences.addAll([
   { id: "browser.download.folderList", type: "int" },
   { id: "browser.download.dir", type: "file" },
 
+  /* r3dfox preferences */
+
+  { id: "widget.non-native-theme.enabled", type: "bool",  inverted: true },
+  { id: "r3dfox.customizations.enabled", type: "bool" },
+  { id: "r3dfox.less.aero.fog", type: "bool" },
+  { id: "r3dfox.aero.fog", type: "bool" },
+  { id: "r3dfox.force.transparency", type: "bool" },
+
   /* Tab preferences
   Preferences:
 
