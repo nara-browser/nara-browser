@@ -303,9 +303,14 @@ panelview {
     margin-inline-end: 8px;
   }
 
-  .menu-accel,
-  .menu-iconic-accel {
+ :is(.menu-accel, .menu-iconic-accel) {
     margin-inline-start: 16px;
+
+    @media not (prefers-contrast) {
+      menuitem:not([disabled]) > .menu-accel-container > & {
+        color: var(--panel-disabled-color);
+      }
+    }
   }
 
   menu > .menu-right {
