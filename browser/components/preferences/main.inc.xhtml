@@ -12,6 +12,54 @@
 
 <script src="chrome://mozapps/content/preferences/fontbuilder.js"/>
 
+<!-- r3dfox -->
+<hbox id="r3dfoxcategory"
+      class="subcategory"
+      hidden="true"
+      data-category="paneGeneral">
+  <html:h1 data-l10n-id="r3dfox-title"/>
+</hbox>
+
+<!-- r3dfox -->
+<groupbox id="r3dfoxGroup" data-category="paneGeneral" hidden="true">
+  <label class="search-header" hidden="true"><html:h2 data-l10n-id="r3dfox-title"/></label>
+
+  <hbox align="center">
+    <checkbox id="r3dfoxUseNativeStyles"
+              data-l10n-id="r3dfox-native-checkbox"
+              preference="widget.non-native-theme.enabled"/>
+  </hbox>
+  <description class="indent tip-caption" data-l10n-id="r3dfox-native-checkbox-desc"/>
+
+  <hbox align="center">
+    <checkbox id="r3dfoxTheme"
+              data-l10n-id="r3dfox-theme"
+              preference="r3dfox.customizations.enabled"/>
+  </hbox>
+  <description class="indent tip-caption" data-l10n-id="r3dfox-theme-desc"/>
+
+  <hbox align="center">
+    <checkbox id="r3dfoxlessfog"
+              data-l10n-id="r3dfox-less-fog"
+              preference="r3dfox.less.aero.fog"/>
+  </hbox>
+  <description class="indent tip-caption" data-l10n-id="r3dfox-less-fog-desc"/>
+
+  <hbox align="center">
+    <checkbox id="r3dfoxfog"
+              data-l10n-id="r3dfox-fog"
+              preference="r3dfox.aero.fog"/>
+  </hbox>
+  <description class="indent tip-caption" data-l10n-id="r3dfox-fog-desc"/>
+
+  <hbox align="center">
+    <checkbox id="r3dfoxtransparency"
+              data-l10n-id="r3dfox-transparency"
+              preference="r3dfox.force.transparency"/>
+  </hbox>
+  <description class="indent tip-caption" data-l10n-id="r3dfox-transparency-desc"/>
+</groupbox>
+
 <html:template id="template-paneGeneral">
 <hbox id="generalCategory"
       class="subcategory"
