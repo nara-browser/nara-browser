@@ -136,60 +136,62 @@ html|textarea {
   font: inherit;
 }
 
-html|input:where(:not([type=radio i], [type=checkbox i], [type=range i])),
-html|textarea {
-  appearance: none;
-  padding: var(--space-small);
-  border: 1px solid var(--input-border-color, ThreeDShadow);
-  border-radius: var(--border-radius-small);
-  margin: 0;
-  background-color: var(--input-bgcolor, Field);
-  color: var(--input-color, FieldText);
-
-  &:where(:user-invalid) {
-    border-color: var(--outline-color-error);
+@media (-moz-bool-pref: "widget.non-native-theme.enabled") {
+  html|input:where(:not([type=radio i], [type=checkbox i], [type=range i])),
+  html|textarea {
+    appearance: none;
+    padding: var(--space-small);
+    border: 1px solid var(--input-border-color, ThreeDShadow);
+    border-radius: var(--border-radius-small);
+    margin: 0;
+    background-color: var(--input-bgcolor, Field);
+    color: var(--input-color, FieldText);
+  
+    &:where(:user-invalid) {
+      border-color: var(--outline-color-error);
+    }
+  
+    &:where(:focus-visible) {
+      outline: var(--focus-outline);
+      outline-offset: var(--focus-outline-inset);
+    }
   }
-
-  &:where(:focus-visible) {
-    outline: var(--focus-outline);
-    outline-offset: var(--focus-outline-inset);
-  }
-}
-
-/* adapted from toolkit/themes/shared/menulist-shared.css */
-html|select:where(:not([size], [multiple])) {
-  appearance: none;
-  padding: 6px 16px;
-  padding-inline-end: 32px; /* 2 * 10px padding + image's 12px width */
-  margin: 5px 2px 3px;
-  border: none;
-  border-radius: var(--border-radius-small);
-
-  font-weight: var(--font-weight-bold);
-
-  color: var(--button-color, ButtonText);
-  background-color: var(--button-bgcolor, ButtonFace);
-  background-image: url(chrome://global/skin/icons/arrow-down-12.svg);
-  background-position: right 10px center;
-  background-repeat: no-repeat;
-  -moz-context-properties: fill;
-  fill: currentColor;
-
-  &:-moz-locale-dir(rtl) {
-    background-position-x: left 10px;
-  }
-
-  &:hover {
-    background-color: var(--button-hover-bgcolor, color-mix(in srgb, currentColor 10%, ButtonFace));
-  }
-
-  &:hover:active {
-    background-color: var(--button-active-bgcolor, color-mix(in srgb, currentColor 20%, ButtonFace));
-  }
-
-  &:focus-visible {
-    outline: var(--focus-outline);
-    outline-offset: var(--focus-outline-offset);
+  
+  /* adapted from toolkit/themes/shared/menulist-shared.css */
+  html|select:where(:not([size], [multiple])) {
+    appearance: none;
+    padding: 6px 16px;
+    padding-inline-end: 32px; /* 2 * 10px padding + image's 12px width */
+    margin: 5px 2px 3px;
+    border: none;
+    border-radius: var(--border-radius-small);
+  
+    font-weight: var(--font-weight-bold);
+  
+    color: var(--button-color, ButtonText);
+    background-color: var(--button-bgcolor, ButtonFace);
+    background-image: url(chrome://global/skin/icons/arrow-down-12.svg);
+    background-position: right 10px center;
+    background-repeat: no-repeat;
+    -moz-context-properties: fill;
+    fill: currentColor;
+  
+    &:-moz-locale-dir(rtl) {
+      background-position-x: left 10px;
+    }
+  
+    &:hover {
+      background-color: var(--button-hover-bgcolor, color-mix(in srgb, currentColor 10%, ButtonFace));
+    }
+  
+    &:hover:active {
+      background-color: var(--button-active-bgcolor, color-mix(in srgb, currentColor 20%, ButtonFace));
+    }
+  
+    &:focus-visible {
+      outline: var(--focus-outline);
+      outline-offset: var(--focus-outline-offset);
+    }
   }
 }
 
