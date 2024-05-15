@@ -69,12 +69,12 @@
 
       /* See bug 1715990 about why we do this ourselves on HCM */
       @media (prefers-contrast) {
-        :root[tabsintitlebar]:not(:-moz-lwtheme) {
+        :root[tabsintitlebar]:not([lwtheme]) {
           background-color: ActiveCaption;
           color: CaptionText;
         }
 
-        :root[tabsintitlebar]:not(:-moz-lwtheme):-moz-window-inactive {
+        :root[tabsintitlebar]:not([lwtheme]):-moz-window-inactive {
           background-color: InactiveCaption;
           color: InactiveCaptionText;
         }
@@ -271,8 +271,10 @@
     /* Artificially draw window borders that are covered by lwtheme, see bug 591930.
      * Borders for win7 are below, win10 only needs something like this when
      * drawing in the titlebar (-moz-windows-accent-color-in-titlebar). */
-    #main-window[sizemode="normal"] #navigator-toolbox:-moz-lwtheme {
-      border-top: 1px solid var(--glass-shadow-color);
+    #main-window[sizemode="normal"] #navigator-toolbox {
+      &[lwtheme] {
+        border-top: 1px solid var(--glass-shadow-color);
+      }
     }
 
     /* Allows seeing inactive stuffs on 8 */
@@ -282,21 +284,21 @@
     }
   }
 
-  :root[darkwindowframe="true"]:not(:-moz-window-inactive, :-moz-lwtheme) {
+  :root[darkwindowframe="true"]:not([lwtheme], :-moz-window-inactive) {
     color: white;
   }
 
-  #appcontent:not(:-moz-lwtheme) {
+  #appcontent:not([lwtheme]) {
     background-color: -moz-dialog;
   }
 }
 
 @media (-moz-windows-glass) {
-  #toolbar-menubar:not(:-moz-lwtheme) {
+  #toolbar-menubar:not([lwtheme]) {
     text-shadow: 0 0 .5em white, 0 0 .5em white, 0 1px 0 rgba(255,255,255,.4);
   }
 
-  #main-menubar:not(:-moz-lwtheme, :-moz-window-inactive) {
+  #main-menubar:not([lwtheme], :-moz-window-inactive) {
     background-color: rgba(255,255,255,.5);
     color: black;
     border-radius: 4px;
@@ -305,14 +307,18 @@
   /* Artificially draw window borders that are covered by lwtheme, see bug 591930.
    * We use a different border for win8, and this win10+ only needs this if
    * drawing in the titlebar (-moz-windows-accent-color-in-titlebar). */
-  #main-window[sizemode="normal"] #navigator-toolbox:-moz-lwtheme {
-    border-top: 1px solid var(--glass-active-border-color);
-    padding-top: 1px;
-    box-shadow: 0 1px 0 rgba(255,255,255,.6) inset;
+  #main-window[sizemode="normal"] #navigator-toolbox {
+    &[lwtheme] {
+      border-top: 1px solid var(--glass-active-border-color);
+      padding-top: 1px;
+      box-shadow: 0 1px 0 rgba(255,255,255,.6) inset;
+    }
   }
 
-  #main-window[sizemode="normal"] #navigator-toolbox:-moz-lwtheme:-moz-window-inactive {
-    border-top-color: var(--glass-inactive-border-color);
+  #main-window[sizemode="normal"] #navigator-toolbox:-moz-window-inactive {
+    &[lwtheme] {
+      border-top-color: var(--glass-inactive-border-color);
+    }
   }
 }
 
@@ -327,20 +333,24 @@
     }
 
     /* Render a window top border for lwthemes: */
-    #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox:-moz-lwtheme {
-      background-image: linear-gradient(to bottom,
-            var(--glass-active-border-color) 0, var(--glass-active-border-color) 1px,
-            rgba(255,255,255,.6) 1px, rgba(255,255,255,.6) 2px, transparent 2px);
+    #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox {
+      &[lwtheme] {
+        background-image: linear-gradient(to bottom,
+              var(--glass-active-border-color) 0, var(--glass-active-border-color) 1px,
+              rgba(255,255,255,.6) 1px, rgba(255,255,255,.6) 2px, transparent 2px);
+      }
     }
 
-    #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox:-moz-lwtheme:-moz-window-inactive {
-      background-image: linear-gradient(to bottom,
-            var(--glass-inactive-border-color) 0, var(--glass-inactive-border-color) 1px,
-            rgba(255,255,255,.6) 1px, rgba(255,255,255,.6) 2px, transparent 2px);
+    #main-window[tabsintitlebar][sizemode="normal"] #navigator-toolbox:-moz-window-inactive {
+      &[lwtheme] {
+        background-image: linear-gradient(to bottom,
+              var(--glass-inactive-border-color) 0, var(--glass-inactive-border-color) 1px,
+              rgba(255,255,255,.6) 1px, rgba(255,255,255,.6) 2px, transparent 2px);
+      }
     }
   }
 
-  #print-preview-toolbar:not(:-moz-lwtheme) {
+  #print-preview-toolbar:not([lwtheme]) {
     appearance: auto;
     -moz-default-appearance: -moz-win-browsertabbar-toolbox;
   }
