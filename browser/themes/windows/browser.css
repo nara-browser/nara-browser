@@ -67,7 +67,7 @@
  */
 @media (-moz-windows-default-theme) {
   @media not (-moz-platform: windows-win7) {
-    #toolbar-menubar:not(:-moz-lwtheme):-moz-window-inactive {
+    #toolbar-menubar:not([lwtheme]):-moz-window-inactive {
       color: ThreeDShadow;
     }
   }
@@ -95,7 +95,7 @@
 @media (-moz-platform: windows-win7),
        (-moz-platform: windows-win8) {
   @media (-moz-windows-default-theme) {
-    #TabsToolbar:not(:-moz-lwtheme) {
+    #TabsToolbar:not([lwtheme]) {
       @media (-moz-bool-pref: "r3dfox.aero.fog") {
         @media (-moz-bool-pref: "r3dfox.less.aero.fog") {
           background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 40%, transparent);
@@ -112,13 +112,13 @@
        not (-moz-windows-default-theme),
        (-moz-platform: windows-win8) {
   /* Please keep the menu text colors in this media block in sync with
-   * light-dark-overrides.css, minus the :not(:-moz-lwtheme) condition - see Bug 1165718.
+   * light-dark-overrides.css, minus the :not([lwtheme]) condition - see Bug 1165718.
    */
-  :root[tabsintitlebar]:not(:-moz-lwtheme) {
+  :root[tabsintitlebar]:not([lwtheme]) {
     color: CaptionText;
   }
 
-  :root[tabsintitlebar]:not(:-moz-lwtheme):-moz-window-inactive {
+  :root[tabsintitlebar]:not([lwtheme]):-moz-window-inactive {
     color: InactiveCaptionText;
   }
 }
@@ -131,25 +131,25 @@
    * the tabs.
    */
   @media (-moz-bool-pref: "r3dfox.aero.fog") {
-    :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar:not(:-moz-lwtheme) {
+    :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar:not([lwtheme]) {
       background-image: linear-gradient(transparent, ActiveCaption);
       background-size: auto 200%;
     }
 
-    :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar:not(:-moz-lwtheme):-moz-window-inactive {
+    :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar:not([lwtheme]):-moz-window-inactive {
       background-image: linear-gradient(transparent, InactiveCaption);
     }
   }
 
   /* Add a window top border for webextension themes */
-  :root[tabsintitlebar][sizemode="normal"] #navigator-toolbox:-moz-lwtheme {
+  :root[lwtheme][tabsintitlebar][sizemode="normal"] #navigator-toolbox {
     background-image: linear-gradient(to bottom,
           ThreeDLightShadow 0, ThreeDLightShadow 1px,
           ThreeDHighlight 1px, ThreeDHighlight 2px,
           ActiveBorder 2px, ActiveBorder 4px, transparent 4px);
   }
 
-  :root[tabsintitlebar] :is(#TabsToolbar, #toolbar-menubar) toolbarbutton:not(:-moz-lwtheme) {
+  :root[tabsintitlebar] :is(#TabsToolbar, #toolbar-menubar) toolbarbutton:not([lwtheme]) {
     color: inherit;
   }
 }
@@ -164,23 +164,6 @@
 :root[tabsintitlebar][sizemode="maximized"] #titlebar {
   appearance: auto;
   -moz-default-appearance: -moz-window-titlebar-maximized;
-}
-
-@media not (-moz-windows-compositor) {
-  /**
-   * Anytime we're not using the compositor on Windows, the -moz-window-titlebar
-   * and -moz-window-titlebar-maximized values for -moz-appearance override
-   * backgrounds supplied by lwthemes. We make the #titlebar itself hidden, but
-   * it's children visible in order to hide the background but keep the margin and
-   * padding that comes from those -moz-window-titlebar rules.
-   */
-  :root:not([inFullscreen]) #titlebar:-moz-lwtheme {
-    visibility: hidden;
-  }
-  :root:not([inFullscreen], [chromehidden~="menubar"]) #toolbar-menubar:-moz-lwtheme,
-  :root:not([inFullscreen], [chromehidden~="toolbar"]) #TabsToolbar:-moz-lwtheme {
-    visibility: visible;
-  }
 }
 
 @media (-moz-windows-classic) {
@@ -327,7 +310,7 @@
 /* Address bar results view */
 
 @media not (-moz-windows-default-theme) {
-  :root:not(:-moz-lwtheme) {
+  :root:not([lwtheme]) {
     --urlbar-popup-action-color: LinkText;
   }
 }
