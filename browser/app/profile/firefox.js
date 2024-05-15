@@ -746,14 +746,10 @@ pref("browser.search.separatePrivateDefault.ui.enabled", true);
 pref("browser.search.separatePrivateDefault.ui.banner.max", 0);
 
 // Enables search SERP telemetry (impressions, engagements and abandonment)
-pref("browser.search.serpEventTelemetry.enabled", true);
+pref("browser.search.serpEventTelemetry.enabled", false);
 
 // Enables search SERP telemetry page categorization.
-#ifdef NIGHTLY_BUILD
-pref("browser.search.serpEventTelemetryCategorization.enabled", true);
-#else
 pref("browser.search.serpEventTelemetryCategorization.enabled", false);
-#endif
 
 // Search Bar removal from the toolbar for users who haven’t used it in 120
 // days
