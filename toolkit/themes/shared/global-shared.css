@@ -64,7 +64,7 @@
   }
 
   @media (prefers-contrast) {
-    &:not(:-moz-lwtheme) {
+    &:not([lwtheme]) {
   /* Reduce the opacity of disabled toolbar buttons in order to increase
        contrast with the enabled state. */
       --toolbarbutton-disabled-opacity: 0.3;
