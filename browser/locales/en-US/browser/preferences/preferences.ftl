@@ -149,6 +149,14 @@ r3dfox-native-checkbox =
 
 r3dfox-native-checkbox-desc = This controls whether the scrollbar, checkboxes, and other elements use their native system counterparts or their non-native browser themed style. May requre browser restart.
 
+r3dfox-native-scroll = Scrollbar style
+
+r3dfox-native-scroll-desc = This controls the style of the scrollbar.
+
+r3dfox-fake-scroll-type = Non-native scrollbar theme
+
+r3dfox-fake-scroll-type-desc = This controls the theme of the scrollbar.
+
 r3dfox-theme =
     .label = Use r3dfox theme styles
 
