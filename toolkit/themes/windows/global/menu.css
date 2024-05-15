@@ -177,42 +177,35 @@ menubar > menu[_moz-menuactive="true"]:not([disabled="true"]) {
     appearance: none;
     border-color: transparent;
 
+    @media (-moz-windows-classic) {
+      border: 2px solid transparent;
+    }
+
+    @media (-moz-windows-default-theme) {
+      appearance: auto;
+      -moz-default-appearance: menuitem;
+    }
+
     &:not([disabled="true"]) {
       color: inherit;
     }
+
     &[_moz-menuactive="true"]:not([disabled="true"]) {
       background-color: SelectedItem;
       color: SelectedItemText;
       text-shadow: none;
+
+      @media (-moz-windows-default-theme) {
+        color: inherit !important;
+        text-shadow: inherit;
+      }
     }
-  }
-}
 
-@media (-moz-windows-classic) {
-  menubar > menu {
-    border: 2px solid transparent;
-  }
-
-  menubar > menu[_moz-menuactive="true"][open="true"] {
-    border-width: 3px 1px 1px 3px;
-  }
-}
-
-menubar > menu:-moz-lwtheme {
-  appearance: none;
-  border-color: transparent;
-}
-
-
-@media (-moz-windows-default-theme) {
-  menubar > menu:-moz-lwtheme {
-    appearance: auto;
-    -moz-default-appearance: menuitem;
-  }
-
-  menubar > menu:-moz-lwtheme[_moz-menuactive="true"]:not([disabled="true"]) {
-    color: inherit !important;
-    text-shadow: inherit;
+    @media (-moz-windows-classic) {
+      &[_moz-menuactive="true"][open="true"] {
+        border-width: 3px 1px 1px 3px;
+      }
+    }
   }
 }
 
