@@ -3586,7 +3586,7 @@ bool nsWindow::PrepareForFullscreenTransition(nsISupports** aData) {
   // We don't support fullscreen transition when composition is not
   // enabled, which could make the transition broken and annoying.
   // See bug 1184201.
-  if (dwmCompositionEnabled) {
+  if (!dwmCompositionEnabled) {
     return false;
   }
 
