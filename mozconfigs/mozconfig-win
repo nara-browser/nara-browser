@@ -4,8 +4,11 @@
 
 ##Uncomment PGO for release build
 
-#Uncomment for x86 build
-#ac_add_options --target=i686 
+# x64 build
+ac_add_options --target=x86_64-rust9x-windows-msvc
+
+# x86 build
+#ac_add_options --target=i686-rust9x-windows-msvc
 
 # Build only Mercury
 ac_add_options --enable-application=browser
