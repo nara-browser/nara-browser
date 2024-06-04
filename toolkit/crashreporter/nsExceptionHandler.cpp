@@ -21,7 +21,6 @@
 #include "mozilla/Unused.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Printf.h"
-#include "mozilla/RuntimeExceptionModule.h"
 #include "mozilla/ScopeExit.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/StaticMutex.h"
@@ -1949,7 +1948,6 @@ nsresult SetExceptionHandler(nsIFile* aXREDirectory, bool force /*=false*/) {
   // the crash reporter client
   doReport = ShouldReport();
 
-  RegisterRuntimeExceptionModule();
   InitializeAnnotationFacilities();
 
 #if !defined(MOZ_WIDGET_ANDROID)
@@ -3494,7 +3492,6 @@ bool CreateNotificationPipeForChild(int* childCrashFd, int* childCrashRemapFd) {
 bool SetRemoteExceptionHandler(const char* aCrashPipe,
                                FileHandle aCrashTimeAnnotationFile) {
   MOZ_ASSERT(!gExceptionHandler, "crash client already init'd");
-  RegisterRuntimeExceptionModule();
   InitializeAnnotationFacilities();
 
 #if defined(XP_WIN)
