@@ -986,7 +986,6 @@ mac-signing:
                       - "/Contents/MacOS/XUL"
                       - "/Contents/MacOS/pingsender"
                       - "/Contents/MacOS/minidump-analyzer"
-                      - "/Contents/MacOS/nmhproxy"
                       - "/Contents/MacOS/*.dylib"
                       - "/Contents/Resources/gmp-clearkey/*/*.dylib"
                       - "/Contents/Frameworks/ChannelPrefs.framework"
@@ -1030,7 +1029,6 @@ mac-signing:
                       - "/Contents/Library/LaunchServices/org.mozilla.updater"
                       - "/Contents/MacOS/pingsender"
                       - "/Contents/MacOS/minidump-analyzer"
-                      - "/Contents/MacOS/nmhproxy"
                       - "/Contents/Frameworks/ChannelPrefs.framework"
 
                 - deep: false

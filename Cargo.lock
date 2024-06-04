@@ -4082,19 +4082,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nmhproxy"
-version = "0.1.0"
-dependencies = [
- "dirs",
- "mozbuild",
- "mozilla-central-workspace-hack",
- "serde",
- "serde_json",
- "tempfile",
- "url",
-]
-
-[[package]]
 name = "nom"
 version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
