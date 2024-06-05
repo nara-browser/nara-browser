@@ -383,7 +383,7 @@ impl ErrorModeGuard {
     fn new() -> Option<ErrorModeGuard> {
         unsafe {
             let mut previous_mode = 0;
-            if errhandlingapi::SetThreadErrorMode(SEM_FAILCE, &mut previous_mode) == 0 {
+            if errhandlingapi::SetErrorMode(SEM_FAILCE) == 0 {
                 // How in the world is it possible for what is essentially a simple variable swap
                 // to fail?  For now we just ignore the error -- the worst that can happen here is
                 // the previous mode staying on and user seeing a dialog error on older Windows
@@ -401,7 +401,7 @@ impl ErrorModeGuard {
 impl Drop for ErrorModeGuard {
     fn drop(&mut self) {
         unsafe {
-            errhandlingapi::SetThreadErrorMode(self.0, ptr::null_mut());
+            errhandlingapi::SetErrorMode(self.0);
         }
     }
 }
