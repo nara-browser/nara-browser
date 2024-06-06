@@ -129,7 +129,6 @@
 	LeaveCriticalSection(&SCTP_BASE_INFO(wq_addr_mtx))
 #define SCTP_WQ_ADDR_LOCK_ASSERT()
 
-#if WINVER < 0x0600
 #define SCTP_INP_INFO_LOCK_INIT() \
 	InitializeCriticalSection(&SCTP_BASE_INFO(ipi_ep_mtx))
 #define SCTP_INP_INFO_LOCK_DESTROY() \
@@ -147,24 +146,6 @@
 #define SCTP_INP_INFO_LOCK_ASSERT()
 #define SCTP_INP_INFO_RLOCK_ASSERT()
 #define SCTP_INP_INFO_WLOCK_ASSERT()
-#else
-#define SCTP_INP_INFO_LOCK_INIT() \
-	InitializeSRWLock(&SCTP_BASE_INFO(ipi_ep_mtx))
-#define SCTP_INP_INFO_LOCK_DESTROY()
-#define SCTP_INP_INFO_RLOCK() \
-	AcquireSRWLockShared(&SCTP_BASE_INFO(ipi_ep_mtx))
-#define SCTP_INP_INFO_TRYLOCK() \
-	TryAcquireSRWLockShared(&SCTP_BASE_INFO(ipi_ep_mtx))
-#define SCTP_INP_INFO_WLOCK() \
-	AcquireSRWLockExclusive(&SCTP_BASE_INFO(ipi_ep_mtx))
-#define SCTP_INP_INFO_RUNLOCK() \
-	ReleaseSRWLockShared(&SCTP_BASE_INFO(ipi_ep_mtx))
-#define SCTP_INP_INFO_WUNLOCK() \
-	ReleaseSRWLockExclusive(&SCTP_BASE_INFO(ipi_ep_mtx))
-#define SCTP_INP_INFO_LOCK_ASSERT()
-#define SCTP_INP_INFO_RLOCK_ASSERT()
-#define SCTP_INP_INFO_WLOCK_ASSERT()
-#endif
 
 #define SCTP_IP_PKTLOG_INIT() \
 	InitializeCriticalSection(&SCTP_BASE_INFO(ipi_pktlog_mtx))
