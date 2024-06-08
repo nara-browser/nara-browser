@@ -4126,12 +4126,10 @@ dependencies = [
 name = "nmhproxy"
 version = "0.1.0"
 dependencies = [
- "dirs",
  "mozbuild",
  "mozilla-central-workspace-hack",
  "serde",
  "serde_json",
- "tempfile",
  "url",
 ]
 
