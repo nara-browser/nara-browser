@@ -24,7 +24,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <pixman-config.h>
+#include <config.h>
 #endif
 #include <string.h>
 #include <stdlib.h>
@@ -2836,7 +2836,11 @@ bits_image_fetch_separable_convolution_affine (pixman_image_t * image,
 	sgtot = CLIP (sgtot, 0, 0xff);
 	sbtot = CLIP (sbtot, 0, 0xff);
 
+#ifdef WORDS_BIGENDIAN
+	buffer[k] = (satot << 0) | (srtot << 8) | (sgtot << 16) | (sbtot << 24);
+#else
 	buffer[k] = (satot << 24) | (srtot << 16) | (sgtot << 8) | (sbtot << 0);
+#endif
 
     next:
 	vx += ux;
@@ -2844,7 +2848,7 @@ bits_image_fetch_separable_convolution_affine (pixman_image_t * image,
     }
 }
 
-static const uint32_t zero[2] = { 0, 0 };
+static const uint8_t zero[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static force_inline void
 bits_image_fetch_bilinear_affine (pixman_image_t * image,
@@ -2944,7 +2948,7 @@ bits_image_fetch_bilinear_affine (pixman_image_t * image,
 
 	    if (y2 == 0)
 	    {
-		row1 = (const uint8_t *)zero;
+		row1 = zero;
 		mask1 = 0;
 	    }
 	    else
@@ -2957,7 +2961,7 @@ bits_image_fetch_bilinear_affine (pixman_image_t * image,
 
 	    if (y1 == height - 1)
 	    {
-		row2 = (const uint8_t *)zero;
+		row2 = zero;
 		mask2 = 0;
 	    }
 	    else

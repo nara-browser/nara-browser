@@ -340,7 +340,7 @@ _cairo_hash_table_lookup (cairo_hash_table_t *hash_table,
 {
     cairo_hash_entry_t *entry;
     unsigned long table_size, i, idx, step;
-    uintptr_t hash = key->hash;
+    unsigned long hash = key->hash;
 
     entry = hash_table->cache[hash & 31];
     if (entry && entry->hash == hash && hash_table->keys_equal (key, entry))
