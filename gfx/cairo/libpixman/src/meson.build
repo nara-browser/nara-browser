@@ -20,7 +20,7 @@
 
 config_h = configure_file(
   configuration : config,
-  output : 'pixman-config.h'
+  output : 'config.h'
 )
 
 version_h = configure_file(
@@ -31,8 +31,7 @@ version_h = configure_file(
 )
 
 libpixman_extra_cargs = []
-default_library = get_option('default_library')
-if default_library != 'static' and cc.has_function_attribute('dllexport')
+if cc.has_function_attribute('dllexport')
   libpixman_extra_cargs = ['-DPIXMAN_API=__declspec(dllexport)']
 endif
 

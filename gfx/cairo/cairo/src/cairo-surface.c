@@ -49,6 +49,7 @@
 #include "cairo-recording-surface-private.h"
 #include "cairo-region-private.h"
 #include "cairo-surface-inline.h"
+#include "cairo-tee-surface-private.h"
 
 /**
  * SECTION:cairo-surface
@@ -128,20 +129,13 @@ const cairo_surface_t name = {					\
     NULL,				/* snapshot_detach */	\
     { NULL, NULL },			/* snapshots */		\
     { NULL, NULL },			/* snapshot */		\
-    {                                   /* font options begin */\
-      CAIRO_ANTIALIAS_DEFAULT,		/* antialias */		\
+    { CAIRO_ANTIALIAS_DEFAULT,		/* antialias */		\
       CAIRO_SUBPIXEL_ORDER_DEFAULT,	/* subpixel_order */	\
       CAIRO_LCD_FILTER_DEFAULT,		/* lcd_filter */	\
       CAIRO_HINT_STYLE_DEFAULT,		/* hint_style */	\
       CAIRO_HINT_METRICS_DEFAULT,	/* hint_metrics */	\
-      CAIRO_ROUND_GLYPH_POS_DEFAULT,	/* round_glyph_positions */	\
-      NULL,                            /* variations */ \
-      CAIRO_COLOR_MODE_DEFAULT,                /* color mode */ \
-      CAIRO_COLOR_PALETTE_DEFAULT,     /* color palette */ \
-      NULL, 0,                         /* custom palette */ \
-    },					/* font_options end */		\
-    NULL,                               /* foreground_source */		\
-    FALSE,                              /* foreground_used */   \
+      CAIRO_ROUND_GLYPH_POS_DEFAULT	/* round_glyph_positions */	\
+    }					/* font_options */	\
 }
 
 /* XXX error object! */
@@ -266,6 +260,7 @@ cairo_surface_status (cairo_surface_t *surface)
 {
     return surface->status;
 }
+slim_hidden_def (cairo_surface_status);
 
 static unsigned int
 _cairo_surface_allocate_unique_id (void)
@@ -446,9 +441,6 @@ _cairo_surface_init (cairo_surface_t			*surface,
     surface->snapshot_of = NULL;
 
     surface->has_font_options = FALSE;
-
-    surface->foreground_source = NULL;
-    surface->foreground_used = FALSE;
 }
 
 static void
@@ -460,7 +452,6 @@ _cairo_surface_copy_similar_properties (cairo_surface_t *surface,
 
 	cairo_surface_get_font_options (other, &options);
 	_cairo_surface_set_font_options (surface, &options);
-	_cairo_font_options_fini (&options);
     }
 
     surface->permit_subpixel_antialiasing = other->permit_subpixel_antialiasing;
@@ -614,6 +605,7 @@ cairo_surface_create_similar_image (cairo_surface_t  *other,
 
     return image;
 }
+slim_hidden_def (cairo_surface_create_similar_image);
 
 /**
  * _cairo_surface_map_to_image:
@@ -945,6 +937,7 @@ cairo_surface_reference (cairo_surface_t *surface)
 
     return surface;
 }
+slim_hidden_def (cairo_surface_reference);
 
 /**
  * cairo_surface_destroy:
@@ -987,14 +980,8 @@ cairo_surface_destroy (cairo_surface_t *surface)
     _cairo_user_data_array_fini (&surface->user_data);
     _cairo_user_data_array_fini (&surface->mime_data);
 
-    if (surface->foreground_source)
-	cairo_pattern_destroy (surface->foreground_source);
-
     if (surface->owns_device)
         cairo_device_destroy (surface->device);
-
-    if (surface->has_font_options)
-	_cairo_font_options_fini (&surface->font_options);
 
     assert (surface->snapshot_of == NULL);
     assert (! _cairo_surface_has_snapshots (surface));
@@ -1003,6 +990,7 @@ cairo_surface_destroy (cairo_surface_t *surface)
 
     free (surface);
 }
+slim_hidden_def(cairo_surface_destroy);
 
 /**
  * cairo_surface_get_reference_count:
@@ -1096,6 +1084,7 @@ cairo_surface_finish (cairo_surface_t *surface)
 
     cairo_surface_destroy (surface);
 }
+slim_hidden_def (cairo_surface_finish);
 
 /**
  * _cairo_surface_release_device_reference:
@@ -1223,6 +1212,7 @@ cairo_surface_get_mime_data (cairo_surface_t		*surface,
 	}
     }
 }
+slim_hidden_def (cairo_surface_get_mime_data);
 
 static void
 _cairo_mime_data_destroy (void *ptr)
@@ -1479,6 +1469,7 @@ cairo_surface_set_mime_data (cairo_surface_t		*surface,
 
     return CAIRO_STATUS_SUCCESS;
 }
+slim_hidden_def (cairo_surface_set_mime_data);
 
 /**
  * cairo_surface_supports_mime_type:
@@ -1518,6 +1509,7 @@ cairo_surface_supports_mime_type (cairo_surface_t		*surface,
 
     return FALSE;
 }
+slim_hidden_def (cairo_surface_supports_mime_type);
 
 static void
 _cairo_mime_data_reference (const void *key, void *elt, void *closure)
@@ -1629,6 +1621,7 @@ cairo_surface_get_font_options (cairo_surface_t       *surface,
 
     _cairo_font_options_init_copy (options, &surface->font_options);
 }
+slim_hidden_def (cairo_surface_get_font_options);
 
 /**
  * cairo_surface_set_subpixel_antialiasing:
@@ -1715,6 +1708,7 @@ cairo_surface_flush (cairo_surface_t *surface)
     if (unlikely (status))
 	_cairo_surface_set_error (surface, status);
 }
+slim_hidden_def (cairo_surface_flush);
 
 /**
  * cairo_surface_mark_dirty:
@@ -1743,6 +1737,7 @@ cairo_surface_mark_dirty (cairo_surface_t *surface)
 					extents.x, extents.y,
 					extents.width, extents.height);
 }
+slim_hidden_def (cairo_surface_mark_dirty);
 
 /**
  * cairo_surface_mark_dirty_rectangle:
@@ -1816,6 +1811,7 @@ cairo_surface_mark_dirty_rectangle (cairo_surface_t *surface,
 	    _cairo_surface_set_error (surface, status);
     }
 }
+slim_hidden_def (cairo_surface_mark_dirty_rectangle);
 
 /**
  * cairo_surface_set_device_scale:
@@ -1827,7 +1823,7 @@ cairo_surface_mark_dirty_rectangle (cairo_surface_t *surface,
  * by the CTM when drawing to @surface. One common use for this is to
  * render to very high resolution display devices at a scale factor, so
  * that code that assumes 1 pixel will be a certain size will still work.
- * Setting a transformation via cairo_scale() isn't
+ * Setting a transformation via cairo_translate() isn't
  * sufficient to do this, since functions like
  * cairo_device_to_user() will expose the hidden scale.
  *
@@ -1871,6 +1867,7 @@ cairo_surface_set_device_scale (cairo_surface_t *surface,
 
     _cairo_observers_notify (&surface->device_transform_observers, surface);
 }
+slim_hidden_def (cairo_surface_set_device_scale);
 
 /**
  * cairo_surface_get_device_scale:
@@ -1878,7 +1875,7 @@ cairo_surface_set_device_scale (cairo_surface_t *surface,
  * @x_scale: the scale in the X direction, in device units
  * @y_scale: the scale in the Y direction, in device units
  *
- * This function returns the previous device scale set by
+ * This function returns the previous device offset set by
  * cairo_surface_set_device_scale().
  *
  * Since: 1.14
@@ -1893,6 +1890,7 @@ cairo_surface_get_device_scale (cairo_surface_t *surface,
     if (y_scale)
 	*y_scale = surface->device_transform.yy;
 }
+slim_hidden_def (cairo_surface_get_device_scale);
 
 /**
  * cairo_surface_set_device_offset:
@@ -1947,6 +1945,7 @@ cairo_surface_set_device_offset (cairo_surface_t *surface,
 
     _cairo_observers_notify (&surface->device_transform_observers, surface);
 }
+slim_hidden_def (cairo_surface_set_device_offset);
 
 /**
  * cairo_surface_get_device_offset:
@@ -1969,6 +1968,7 @@ cairo_surface_get_device_offset (cairo_surface_t *surface,
     if (y_offset)
 	*y_offset = surface->device_transform.y0;
 }
+slim_hidden_def (cairo_surface_get_device_offset);
 
 /**
  * cairo_surface_set_fallback_resolution:
@@ -2037,6 +2037,7 @@ cairo_surface_set_fallback_resolution (cairo_surface_t	*surface,
     surface->x_fallback_resolution = x_pixels_per_inch;
     surface->y_fallback_resolution = y_pixels_per_inch;
 }
+slim_hidden_def (cairo_surface_set_fallback_resolution);
 
 /**
  * cairo_surface_get_fallback_resolution:
@@ -2244,11 +2245,6 @@ _cairo_surface_paint (cairo_surface_t		*surface,
     if (unlikely (status))
 	return status;
 
-    if (source->is_foreground_marker && surface->foreground_source) {
-	source = surface->foreground_source;
-	surface->foreground_used = TRUE;
-    }
-
     status = surface->backend->paint (surface, op, source, clip);
     is_clear = op == CAIRO_OPERATOR_CLEAR && clip == NULL;
     if (status != CAIRO_INT_STATUS_NOTHING_TO_DO || is_clear) {
@@ -2298,11 +2294,6 @@ _cairo_surface_mask (cairo_surface_t		*surface,
     status = _cairo_surface_begin_modification (surface);
     if (unlikely (status))
 	return status;
-
-    if (source->is_foreground_marker && surface->foreground_source) {
-	source = surface->foreground_source;
-	surface->foreground_used = TRUE;
-    }
 
     status = surface->backend->mask (surface, op, source, mask, clip);
     if (status != CAIRO_INT_STATUS_NOTHING_TO_DO) {
@@ -2359,16 +2350,6 @@ _cairo_surface_fill_stroke (cairo_surface_t	    *surface,
     status = _cairo_surface_begin_modification (surface);
     if (unlikely (status))
 	return status;
-
-    if (fill_source->is_foreground_marker && surface->foreground_source) {
-	fill_source = surface->foreground_source;
-	surface->foreground_used = TRUE;
-    }
-
-    if (stroke_source->is_foreground_marker && surface->foreground_source) {
-	stroke_source = surface->foreground_source;
-	surface->foreground_used = TRUE;
-    }
 
     if (surface->backend->fill_stroke) {
 	cairo_matrix_t dev_ctm = *stroke_ctm;
@@ -2444,11 +2425,6 @@ _cairo_surface_stroke (cairo_surface_t			*surface,
     if (unlikely (status))
 	return status;
 
-    if (source->is_foreground_marker && surface->foreground_source) {
-	source = surface->foreground_source;
-	surface->foreground_used = TRUE;
-    }
-
     status = surface->backend->stroke (surface, op, source,
 				       path, stroke_style,
 				       ctm, ctm_inverse,
@@ -2493,11 +2469,6 @@ _cairo_surface_fill (cairo_surface_t		*surface,
     status = _cairo_surface_begin_modification (surface);
     if (unlikely (status))
 	return status;
-
-    if (source->is_foreground_marker && surface->foreground_source) {
-	source = surface->foreground_source;
-	surface->foreground_used = TRUE;
-    }
 
     status = surface->backend->fill (surface, op, source,
 				     path, fill_rule,
@@ -2544,6 +2515,7 @@ cairo_surface_copy_page (cairo_surface_t *surface)
 
     _cairo_surface_set_error (surface, surface->backend->copy_page (surface));
 }
+slim_hidden_def (cairo_surface_copy_page);
 
 /**
  * cairo_surface_show_page:
@@ -2582,6 +2554,7 @@ cairo_surface_show_page (cairo_surface_t *surface)
 
     _cairo_surface_set_error (surface, surface->backend->show_page (surface));
 }
+slim_hidden_def (cairo_surface_show_page);
 
 /**
  * _cairo_surface_get_extents:
@@ -2672,12 +2645,12 @@ cairo_surface_has_show_text_glyphs (cairo_surface_t	    *surface)
     else
 	return surface->backend->show_text_glyphs != NULL;
 }
+slim_hidden_def (cairo_surface_has_show_text_glyphs);
 
 #define GLYPH_CACHE_SIZE 64
 
 static inline cairo_int_status_t
 ensure_scaled_glyph (cairo_scaled_font_t   *scaled_font,
-		     cairo_color_t         *foreground_color,
                      cairo_scaled_glyph_t **glyph_cache,
                      cairo_glyph_t         *glyph,
                      cairo_scaled_glyph_t **scaled_glyph)
@@ -2690,17 +2663,8 @@ ensure_scaled_glyph (cairo_scaled_font_t   *scaled_font,
     if (*scaled_glyph == NULL || _cairo_scaled_glyph_index (*scaled_glyph) != glyph->index) {
         status = _cairo_scaled_glyph_lookup (scaled_font,
                                              glyph->index,
-                                             CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE,
-                                             foreground_color,
+                                             CAIRO_SCALED_GLYPH_INFO_SURFACE,
                                              scaled_glyph);
-        if (status == CAIRO_INT_STATUS_UNSUPPORTED) {
-            /* If the color surface not available, ensure scaled_glyph is not NULL. */
-            status = _cairo_scaled_glyph_lookup (scaled_font,
-                                                 glyph->index,
-                                                 CAIRO_SCALED_GLYPH_INFO_SURFACE,
-                                                 NULL, /* foreground color */
-                                                 scaled_glyph);
-        }
         if (unlikely (status))
             status = _cairo_scaled_font_set_error (scaled_font, status);
 
@@ -2716,39 +2680,31 @@ composite_one_color_glyph (cairo_surface_t       *surface,
                            const cairo_pattern_t *source,
                            const cairo_clip_t    *clip,
                            cairo_glyph_t         *glyph,
-                           cairo_scaled_glyph_t  *scaled_glyph,
-			   double                 x_scale,
-			   double                 y_scale)
+                           cairo_scaled_glyph_t  *scaled_glyph)
 {
     cairo_int_status_t status;
     cairo_image_surface_t *glyph_surface;
     cairo_pattern_t *pattern;
     cairo_matrix_t matrix;
-    int has_color;
 
     status = CAIRO_INT_STATUS_SUCCESS;
 
-    has_color = scaled_glyph->has_info & CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE;
-    if (has_color)
-        glyph_surface = scaled_glyph->color_surface;
-    else
-        glyph_surface = scaled_glyph->surface;
+    glyph_surface = scaled_glyph->color_surface;
 
     if (glyph_surface->width && glyph_surface->height) {
         int x, y;
         /* round glyph locations to the nearest pixels */
         /* XXX: FRAGILE: We're ignoring device_transform scaling here. A bug? */
-	x = _cairo_lround (glyph->x * x_scale - glyph_surface->base.device_transform.x0);
-	y = _cairo_lround (glyph->y * y_scale - glyph_surface->base.device_transform.y0);
+	x = _cairo_lround (glyph->x - glyph_surface->base.device_transform.x0);
+	y = _cairo_lround (glyph->y - glyph_surface->base.device_transform.y0);
 
         pattern = cairo_pattern_create_for_surface ((cairo_surface_t *)glyph_surface);
         cairo_matrix_init_translate (&matrix, - x, - y);
-	cairo_matrix_scale (&matrix, x_scale, y_scale);
         cairo_pattern_set_matrix (pattern, &matrix);
-        if (op == CAIRO_OPERATOR_SOURCE || op == CAIRO_OPERATOR_CLEAR || !has_color)
-	    status = _cairo_surface_mask (surface, op, pattern, pattern, clip);
-        else
-	    status = _cairo_surface_paint (surface, op, pattern, clip);
+	if (op == CAIRO_OPERATOR_SOURCE || op == CAIRO_OPERATOR_CLEAR)
+	  status = surface->backend->mask (surface, op, pattern, pattern, clip);
+	else
+	  status = surface->backend->paint (surface, op, pattern, clip);
         cairo_pattern_destroy (pattern);
     }
 
@@ -2779,32 +2735,6 @@ composite_color_glyphs (cairo_surface_t             *surface,
     int byte_pos = 0;
     int gp;
     cairo_scaled_glyph_t *glyph_cache[GLYPH_CACHE_SIZE];
-    cairo_color_t *foreground_color = NULL;
-    double x_scale = 1.0;
-    double y_scale = 1.0;
-
-    if (surface->is_vector) {
-	cairo_font_face_t *font_face;
-	cairo_matrix_t font_matrix;
-	cairo_matrix_t ctm;
-	cairo_font_options_t font_options;
-
-	x_scale = surface->x_fallback_resolution / surface->x_resolution;
-	y_scale = surface->y_fallback_resolution / surface->y_resolution;
-	font_face = cairo_scaled_font_get_font_face (scaled_font);
-	cairo_scaled_font_get_font_matrix (scaled_font, &font_matrix);
-	cairo_scaled_font_get_ctm (scaled_font, &ctm);
-	_cairo_font_options_init_default (&font_options);
-	cairo_scaled_font_get_font_options (scaled_font, &font_options);
-	cairo_matrix_scale (&ctm, x_scale, y_scale);
-	scaled_font = cairo_scaled_font_create (font_face,
-						&font_matrix,
-						&ctm,
-						&font_options);
-    }
-
-    if (source->type == CAIRO_PATTERN_TYPE_SOLID)
-	foreground_color = &((cairo_solid_pattern_t *) source)->color;
 
     memset (glyph_cache, 0, sizeof (glyph_cache));
 
@@ -2818,7 +2748,7 @@ composite_color_glyphs (cairo_surface_t             *surface,
             glyph_pos = *num_glyphs - 1;
 
         for (i = 0; i < *num_clusters; i++) {
-            cairo_bool_t skip_cluster = TRUE;
+            cairo_bool_t skip_cluster = FALSE;
 
             for (j = 0; j < clusters[i].num_glyphs; j++) {
                 if (cluster_flags & CAIRO_TEXT_CLUSTER_FLAG_BACKWARD)
@@ -2826,27 +2756,15 @@ composite_color_glyphs (cairo_surface_t             *surface,
                 else
                     gp = glyph_pos + j;
 
-                status = ensure_scaled_glyph (scaled_font, foreground_color, glyph_cache,
+                status = ensure_scaled_glyph (scaled_font, glyph_cache,
                                               &glyphs[gp], &scaled_glyph);
                 if (unlikely (status))
                     goto UNLOCK;
 
-                if ((scaled_glyph->has_info & CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE) != 0) {
-		    cairo_bool_t supports_color_glyph = FALSE;
-
-		    if (surface->backend->supports_color_glyph) {
-			_cairo_scaled_font_thaw_cache (scaled_font);
-			supports_color_glyph = _cairo_surface_supports_color_glyph (surface, scaled_font, glyphs[gp].index);
-
-			memset (glyph_cache, 0, sizeof (glyph_cache));
-			_cairo_scaled_font_freeze_cache (scaled_font);
-		    }
-
-		    if (!supports_color_glyph) {
-			skip_cluster = FALSE;
-			break;
-		    }
-		}
+                if ((scaled_glyph->has_info & CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE) == 0) {
+                    skip_cluster = TRUE;
+                    break;
+                }
             }
 
             if (skip_cluster) {
@@ -2869,14 +2787,13 @@ composite_color_glyphs (cairo_surface_t             *surface,
                 else
                     gp = glyph_pos + j;
 
-                status = ensure_scaled_glyph (scaled_font, foreground_color, glyph_cache,
+                status = ensure_scaled_glyph (scaled_font, glyph_cache,
                                               &glyphs[gp], &scaled_glyph);
                 if (unlikely (status))
                     goto UNLOCK;
 
                 status = composite_one_color_glyph (surface, op, source, clip,
-						    &glyphs[gp], scaled_glyph,
-						    x_scale, y_scale);
+                                                    &glyphs[gp], scaled_glyph);
                 if (unlikely (status && status != CAIRO_INT_STATUS_NOTHING_TO_DO))
                     goto UNLOCK;
             }
@@ -2889,10 +2806,8 @@ composite_color_glyphs (cairo_surface_t             *surface,
             byte_pos += clusters[i].num_bytes;
         }
 
-        if (cluster_flags & CAIRO_TEXT_CLUSTER_FLAG_BACKWARD) {
+        if (cluster_flags & CAIRO_TEXT_CLUSTER_FLAG_BACKWARD)
             memmove (utf8, utf8 + *utf8_len - remaining_bytes, remaining_bytes);
-            memmove (glyphs, glyphs + (*num_glyphs - remaining_glyphs), sizeof (cairo_glyph_t) * remaining_glyphs);
-        }
 
         *utf8_len = remaining_bytes;
         *num_glyphs = remaining_glyphs;
@@ -2901,7 +2816,7 @@ composite_color_glyphs (cairo_surface_t             *surface,
     } else {
 
        for (glyph_pos = 0; glyph_pos < *num_glyphs; glyph_pos++) {
-           status = ensure_scaled_glyph (scaled_font, foreground_color, glyph_cache,
+           status = ensure_scaled_glyph (scaled_font, glyph_cache,
                                          &glyphs[glyph_pos], &scaled_glyph);
            if (unlikely (status))
                goto UNLOCK;
@@ -2912,8 +2827,7 @@ composite_color_glyphs (cairo_surface_t             *surface,
            }
 
            status = composite_one_color_glyph (surface, op, source, clip,
-					       &glyphs[glyph_pos], scaled_glyph,
-					       x_scale, y_scale);
+                                               &glyphs[glyph_pos], scaled_glyph);
            if (unlikely (status && status != CAIRO_INT_STATUS_NOTHING_TO_DO))
                goto UNLOCK;
         }
@@ -2923,9 +2837,6 @@ composite_color_glyphs (cairo_surface_t             *surface,
 
 UNLOCK:
     _cairo_scaled_font_thaw_cache (scaled_font);
-
-    if (surface->is_vector)
-	cairo_scaled_font_destroy (scaled_font);
 
     return status;
 }
@@ -2957,7 +2868,7 @@ _cairo_surface_show_text_glyphs (cairo_surface_t	    *surface,
 				 int			     num_clusters,
 				 cairo_text_cluster_flags_t  cluster_flags,
 				 cairo_scaled_font_t	    *scaled_font,
-				 const cairo_clip_t	    *clip)
+				 const cairo_clip_t		*clip)
 {
     cairo_int_status_t status;
     char *utf8_copy = NULL;
@@ -2978,27 +2889,16 @@ _cairo_surface_show_text_glyphs (cairo_surface_t	    *surface,
     if (unlikely (status))
 	return status;
 
-    status = cairo_scaled_font_status (scaled_font);
-    if (unlikely (status))
-	return status;
-
-    if (!(_cairo_scaled_font_has_color_glyphs (scaled_font) &&
-	  scaled_font->options.color_mode != CAIRO_COLOR_MODE_NO_COLOR))
-    {
-        if (nothing_to_do (surface, op, source))
-	    return CAIRO_STATUS_SUCCESS;
-    }
+    if (nothing_to_do (surface, op, source))
+	return CAIRO_STATUS_SUCCESS;
 
     status = _cairo_surface_begin_modification (surface);
     if (unlikely (status))
 	return status;
 
-    if (source->is_foreground_marker && surface->foreground_source)
-	source = surface->foreground_source;
+    status = CAIRO_INT_STATUS_UNSUPPORTED;
 
-    if (_cairo_scaled_font_has_color_glyphs (scaled_font) &&
-	scaled_font->options.color_mode != CAIRO_COLOR_MODE_NO_COLOR)
-    {
+    if (_cairo_scaled_font_has_color_glyphs (scaled_font)) {
         utf8_copy = malloc (sizeof (char) * utf8_len);
         memcpy (utf8_copy, utf8, sizeof (char) * utf8_len);
         utf8 = utf8_copy;
@@ -3016,14 +2916,13 @@ _cairo_surface_show_text_glyphs (cairo_surface_t	    *surface,
 
         if (num_glyphs == 0)
             goto DONE;
-    } else {
-      utf8_copy = NULL;
     }
+    else
+      utf8_copy = NULL;
 
     /* The logic here is duplicated in _cairo_analysis_surface show_glyphs and
      * show_text_glyphs.  Keep in synch. */
     if (clusters) {
-        status = CAIRO_INT_STATUS_UNSUPPORTED;
 	/* A real show_text_glyphs call.  Try show_text_glyphs backend
 	 * method first */
 	if (surface->backend->show_text_glyphs != NULL) {
@@ -3106,16 +3005,6 @@ _cairo_surface_tag (cairo_surface_t	        *surface,
     return _cairo_surface_set_error (surface, status);
 }
 
-cairo_bool_t
-_cairo_surface_supports_color_glyph (cairo_surface_t       *surface,
-				     cairo_scaled_font_t   *scaled_font,
-				     unsigned long          glyph_index)
-{
-    if (surface->backend->supports_color_glyph != NULL)
-	return surface->backend->supports_color_glyph (surface, scaled_font, glyph_index);
-
-    return FALSE;
-}
 
 /**
  * _cairo_surface_set_resolution:
@@ -3213,9 +3102,7 @@ _cairo_surface_create_in_error (cairo_status_t status)
     case CAIRO_STATUS_PNG_ERROR:
     case CAIRO_STATUS_FREETYPE_ERROR:
     case CAIRO_STATUS_WIN32_GDI_ERROR:
-    case CAIRO_INT_STATUS_DWRITE_ERROR:
     case CAIRO_STATUS_TAG_ERROR:
-    case CAIRO_STATUS_SVG_FONT_ERROR:
     default:
 	_cairo_error_throw (CAIRO_STATUS_NO_MEMORY);
 	return (cairo_surface_t *) &_cairo_surface_nil;

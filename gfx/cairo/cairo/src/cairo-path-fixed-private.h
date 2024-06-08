@@ -126,7 +126,7 @@ _cairo_path_fixed_append (cairo_path_fixed_t		    *path,
 			  cairo_fixed_t			     tx,
 			  cairo_fixed_t			     ty);
 
-cairo_private uintptr_t
+cairo_private unsigned long
 _cairo_path_fixed_hash (const cairo_path_fixed_t *path);
 
 cairo_private unsigned long

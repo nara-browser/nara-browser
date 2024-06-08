@@ -60,7 +60,7 @@
  **/
 
 #define _cairo_malloc(size) \
-   ((size) != 0 ? malloc(size) : NULL)
+   ((size) > 0 ? malloc((unsigned) (size)) : NULL)
 
 /**
  * _cairo_malloc_ab:
@@ -79,15 +79,9 @@
  * case of malloc() failure or overflow.
  **/
 
-static cairo_always_inline void *
-_cairo_malloc_ab(size_t a, size_t size)
-{
-    size_t c;
-    if (_cairo_mul_size_t_overflow (a, size, &c))
-	return NULL;
-
-    return _cairo_malloc(c);
-}
+#define _cairo_malloc_ab(a, size) \
+  ((size) && (unsigned) (a) >= INT32_MAX / (unsigned) (size) ? NULL : \
+   _cairo_malloc((unsigned) (a) * (unsigned) (size)))
 
 /**
  * _cairo_realloc_ab:
@@ -107,15 +101,9 @@ _cairo_malloc_ab(size_t a, size_t size)
  * of memory * is left untouched).
  **/
 
-static cairo_always_inline void *
-_cairo_realloc_ab(void *ptr, size_t a, size_t size)
-{
-    size_t c;
-    if (_cairo_mul_size_t_overflow (a, size, &c))
-	return NULL;
-
-    return realloc(ptr, c);
-}
+#define _cairo_realloc_ab(ptr, a, size) \
+  ((size) && (unsigned) (a) >= INT32_MAX / (unsigned) (size) ? NULL : \
+   realloc(ptr, (unsigned) (a) * (unsigned) (size)))
 
 /**
  * _cairo_malloc_abc:
@@ -134,18 +122,10 @@ _cairo_realloc_ab(void *ptr, size_t a, size_t size)
  * case of malloc() failure or overflow.
  **/
 
-static cairo_always_inline void *
-_cairo_malloc_abc(size_t a, size_t b, size_t size)
-{
-    size_t c, d;
-    if (_cairo_mul_size_t_overflow (a, b, &c))
-	return NULL;
-
-    if (_cairo_mul_size_t_overflow (c, size, &d))
-	return NULL;
-
-    return _cairo_malloc(d);
-}
+#define _cairo_malloc_abc(a, b, size) \
+  ((b) && (unsigned) (a) >= INT32_MAX / (unsigned) (b) ? NULL : \
+   (size) && (unsigned) ((a)*(b)) >= INT32_MAX / (unsigned) (size) ? NULL : \
+   _cairo_malloc((unsigned) (a) * (unsigned) (b) * (unsigned) (size)))
 
 /**
  * _cairo_malloc_ab_plus_c:
@@ -161,17 +141,9 @@ _cairo_malloc_abc(size_t a, size_t b, size_t size)
  * case of malloc() failure or overflow.
  **/
 
-static cairo_always_inline void *
-_cairo_malloc_ab_plus_c(size_t a, size_t size, size_t c)
-{
-    size_t d, e;
-    if (_cairo_mul_size_t_overflow (a, size, &d))
-	return NULL;
-
-    if (_cairo_add_size_t_overflow (d, c, &e))
-	return NULL;
-
-    return _cairo_malloc(e);
-}
+#define _cairo_malloc_ab_plus_c(a, size, c) \
+  ((size) && (unsigned) (a) >= INT32_MAX / (unsigned) (size) ? NULL : \
+   (unsigned) (c) >= INT32_MAX - (unsigned) (a) * (unsigned) (size) ? NULL : \
+   _cairo_malloc((unsigned) (a) * (unsigned) (size) + (unsigned) (c)))
 
 #endif /* CAIRO_MALLOC_PRIVATE_H */
