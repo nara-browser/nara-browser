@@ -248,27 +248,6 @@ _pixman_format_from_masks (cairo_format_masks_t *masks,
     return TRUE;
 }
 
-#if PIXMAN_VERSION >= PIXMAN_VERSION_ENCODE(0,39,0)
-/* Convenience function to convert #cairo_dither_t into #pixman_dither_t */
-static pixman_dither_t
-_cairo_dither_to_pixman_dither (cairo_dither_t dither)
-{
-    switch (dither) {
-    case CAIRO_DITHER_FAST:
-        return PIXMAN_DITHER_FAST;
-    case CAIRO_DITHER_GOOD:
-        return PIXMAN_DITHER_GOOD;
-    case CAIRO_DITHER_BEST:
-        return PIXMAN_DITHER_BEST;
-    case CAIRO_DITHER_NONE:
-    case CAIRO_DITHER_DEFAULT:
-    default:
-        return PIXMAN_DITHER_NONE;
-    }
-}
-#endif
-
-
 /* A mask consisting of N bits set to 1. */
 #define MASK(N) ((1UL << (N))-1)
 
@@ -432,8 +411,9 @@ cairo_image_surface_create (cairo_format_t	format,
     return _cairo_image_surface_create_with_pixman_format (NULL, pixman_format,
 							   width, height, -1);
 }
+slim_hidden_def (cairo_image_surface_create);
 
-cairo_surface_t *
+    cairo_surface_t *
 _cairo_image_surface_create_with_content (cairo_content_t	content,
 					  int			width,
 					  int			height)
@@ -469,7 +449,7 @@ _cairo_image_surface_create_with_content (cairo_content_t	content,
  *
  * Since: 1.6
  **/
-int
+    int
 cairo_format_stride_for_width (cairo_format_t	format,
 			       int		width)
 {
@@ -486,6 +466,7 @@ cairo_format_stride_for_width (cairo_format_t	format,
 
     return CAIRO_STRIDE_FOR_WIDTH_BPP (width, bpp);
 }
+slim_hidden_def (cairo_format_stride_for_width);
 
 /**
  * cairo_image_surface_create_for_data:
@@ -532,7 +513,7 @@ cairo_format_stride_for_width (cairo_format_t	format,
  *
  * Since: 1.0
  **/
-cairo_surface_t *
+    cairo_surface_t *
 cairo_image_surface_create_for_data (unsigned char     *data,
 				     cairo_format_t	format,
 				     int		width,
@@ -568,6 +549,7 @@ cairo_image_surface_create_for_data (unsigned char     *data,
 							   width, height,
 							   stride);
 }
+slim_hidden_def (cairo_image_surface_create_for_data);
 
 /**
  * cairo_image_surface_get_data:
@@ -599,6 +581,7 @@ cairo_image_surface_get_data (cairo_surface_t *surface)
 
     return image_surface->data;
 }
+slim_hidden_def (cairo_image_surface_get_data);
 
 /**
  * cairo_image_surface_get_format:
@@ -622,6 +605,7 @@ cairo_image_surface_get_format (cairo_surface_t *surface)
 
     return image_surface->format;
 }
+slim_hidden_def (cairo_image_surface_get_format);
 
 /**
  * cairo_image_surface_get_width:
@@ -645,6 +629,7 @@ cairo_image_surface_get_width (cairo_surface_t *surface)
 
     return image_surface->width;
 }
+slim_hidden_def (cairo_image_surface_get_width);
 
 /**
  * cairo_image_surface_get_height:
@@ -668,6 +653,7 @@ cairo_image_surface_get_height (cairo_surface_t *surface)
 
     return image_surface->height;
 }
+slim_hidden_def (cairo_image_surface_get_height);
 
 /**
  * cairo_image_surface_get_stride:
@@ -695,8 +681,9 @@ cairo_image_surface_get_stride (cairo_surface_t *surface)
 
     return image_surface->stride;
 }
+slim_hidden_def (cairo_image_surface_get_stride);
 
-cairo_format_t
+    cairo_format_t
 _cairo_format_from_content (cairo_content_t content)
 {
     switch (content) {
@@ -712,7 +699,7 @@ _cairo_format_from_content (cairo_content_t content)
     return CAIRO_FORMAT_INVALID;
 }
 
-cairo_content_t
+    cairo_content_t
 _cairo_content_from_format (cairo_format_t format)
 {
     switch (format) {
@@ -737,7 +724,7 @@ _cairo_content_from_format (cairo_format_t format)
     return CAIRO_CONTENT_COLOR_ALPHA;
 }
 
-int
+    int
 _cairo_format_bits_per_pixel (cairo_format_t format)
 {
     switch (format) {
@@ -951,8 +938,6 @@ _cairo_image_surface_paint (void			*abstract_surface,
 			    const cairo_clip_t		*clip)
 {
     cairo_image_surface_t *surface = abstract_surface;
-    pixman_dither_t pixman_dither = _cairo_dither_to_pixman_dither (source->dither);
-    pixman_image_set_dither (surface->pixman_image, pixman_dither);
 
     TRACE ((stderr, "%s (surface=%d)\n",
 	    __FUNCTION__, surface->base.unique_id));

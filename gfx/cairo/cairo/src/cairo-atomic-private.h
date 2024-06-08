@@ -39,9 +39,11 @@
 #ifndef CAIRO_ATOMIC_PRIVATE_H
 #define CAIRO_ATOMIC_PRIVATE_H
 
-#include "cairo-compiler-private.h"
+# include "cairo-compiler-private.h"
 
+#if HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include <assert.h>
 
@@ -277,71 +279,8 @@ typedef int64_t cairo_atomic_intptr_t;
 
 #endif
 
-#if !defined(HAS_ATOMIC_OPS) && defined(_WIN32)
-#include <windows.h>
-
-#define HAS_ATOMIC_OPS 1
-
-typedef int32_t cairo_atomic_int_t;
-
-#if SIZEOF_VOID_P==SIZEOF_INT
-typedef unsigned int cairo_atomic_intptr_t;
-#elif SIZEOF_VOID_P==SIZEOF_LONG
-typedef unsigned long cairo_atomic_intptr_t;
-#elif SIZEOF_VOID_P==SIZEOF_LONG_LONG
-typedef unsigned long long cairo_atomic_intptr_t;
-#else
-#error No matching integer pointer type
-#endif
-
-static cairo_always_inline cairo_atomic_int_t
-_cairo_atomic_int_get (cairo_atomic_int_t *x)
-{
-    MemoryBarrier ();
-    return *x;
-}
-
-# define _cairo_atomic_int_get_relaxed(x) *(x)
-# define _cairo_atomic_int_set_relaxed(x, val) *(x) = (val)
-
-# define _cairo_atomic_int_inc(x) ((void) InterlockedIncrement ((LONG*)x))
-# define _cairo_atomic_int_dec(x) ((void) InterlockedDecrement ((LONG*)x))
-# define _cairo_atomic_int_dec_and_test(x) (InterlockedDecrement ((LONG*)x) == 0)
-
-static cairo_always_inline cairo_bool_t
-_cairo_atomic_int_cmpxchg (cairo_atomic_int_t *x,
-                           cairo_atomic_int_t oldv,
-                           cairo_atomic_int_t newv)
-{
-    return InterlockedCompareExchange ((LONG*)x, (LONG)newv, (LONG)oldv) == oldv;
-}
-
-static cairo_always_inline void *
-_cairo_atomic_ptr_get (void **x)
-{
-    MemoryBarrier ();
-    return *x;
-}
-
-static cairo_always_inline cairo_bool_t
-_cairo_atomic_ptr_cmpxchg (void **x, void *oldv, void *newv)
-{
-    return InterlockedCompareExchangePointer (x, newv, oldv) == oldv;
-}
-
-static cairo_always_inline void *
-_cairo_atomic_ptr_cmpxchg_return_old (void **x, void *oldv, void *newv)
-{
-    return InterlockedCompareExchangePointer (x, newv, oldv);
-}
-
-#endif /* !defined(HAS_ATOMIC_OPS) && defined(_WIN32) */
-
-
 #ifndef HAS_ATOMIC_OPS
 
-typedef int cairo_atomic_int_t;
-
 #if SIZEOF_VOID_P==SIZEOF_INT
 typedef unsigned int cairo_atomic_intptr_t;
 #elif SIZEOF_VOID_P==SIZEOF_LONG
@@ -351,6 +290,8 @@ typedef unsigned long long cairo_atomic_intptr_t;
 #else
 #error No matching integer pointer type
 #endif
+
+typedef cairo_atomic_intptr_t cairo_atomic_int_t;
 
 cairo_private void
 _cairo_atomic_int_inc (cairo_atomic_int_t *x);
@@ -376,8 +317,7 @@ cairo_private cairo_atomic_int_t
 _cairo_atomic_int_get_relaxed (cairo_atomic_int_t *x);
 void
 _cairo_atomic_int_set_relaxed (cairo_atomic_int_t *x, cairo_atomic_int_t val);
-cairo_private void*
-_cairo_atomic_ptr_get(void **x);
+# define _cairo_atomic_ptr_get(x) (void *) _cairo_atomic_int_get((cairo_atomic_int_t *) x)
 #else
 # define _cairo_atomic_int_get(x) (*x)
 # define _cairo_atomic_int_get_relaxed(x) (*x)
@@ -442,7 +382,6 @@ _cairo_atomic_ptr_cmpxchg_return_old_fallback(void **x, void *oldv, void *newv)
 #define _cairo_status_set_error(status, err) do { \
     int ret__; \
     assert (err < CAIRO_STATUS_LAST_STATUS); \
-    assert (sizeof(*status) == sizeof(cairo_atomic_int_t)); \
     /* hide compiler warnings about cairo_status_t != int (gcc treats its as \
      * an unsigned integer instead, and about ignoring the return value. */  \
     ret__ = _cairo_atomic_int_cmpxchg ((cairo_atomic_int_t *) status, CAIRO_STATUS_SUCCESS, err); \

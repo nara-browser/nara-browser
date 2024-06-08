@@ -24,7 +24,7 @@
  *
  */
 #ifdef HAVE_CONFIG_H
-#include <pixman-config.h>
+#include <config.h>
 #endif
 
 #include "pixman-private.h"

@@ -22,7 +22,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <pixman-config.h>
+#include <config.h>
 #endif
 #include <stdlib.h>
 #include "pixman-private.h"
