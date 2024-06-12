@@ -9,8 +9,8 @@
 
 #include "mozilla/Types.h"
 
-#ifndef XP_WIN
-#  include <pthread.h>
+#ifdef XP_WIN
+#  include <windows.h>
 #endif
 
 namespace mozilla::detail {
@@ -36,12 +36,10 @@ class RWLockImpl {
   void operator=(RWLockImpl&&) = delete;
   bool operator==(const RWLockImpl& rhs) = delete;
 
-#ifndef XP_WIN
-  pthread_rwlock_t mRWLock;
-#else
-  // SRWLock is pointer-sized. We declare it in such a fashion here to avoid
-  // pulling in windows.h wherever this header is used.
-  void* mRWLock;
+#ifdef XP_WIN
+  CRITICAL_SECTION mLock;
+  DWORD mWriterThreadId;
+  uint32_t mReaderCount;
 #endif
 };
 
