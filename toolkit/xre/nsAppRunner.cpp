@@ -548,7 +548,7 @@ enum E10sStatus {
 static bool gBrowserTabsRemoteAutostart = false;
 static E10sStatus gBrowserTabsRemoteStatus;
 static bool gBrowserTabsRemoteAutostartInitialized = false;
-const char* kForceDisableE10sPref = "browser.e10s.disabled";
+const char* kForceDisableE10sPref = "r3dfox.e10s.disabled";
 
 namespace mozilla {
 
