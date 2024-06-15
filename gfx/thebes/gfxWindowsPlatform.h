@@ -207,8 +207,6 @@ class gfxWindowsPlatform final : public gfxPlatform {
   static nsTArray<uint8_t> GetPlatformCMSOutputProfileData_Impl();
 
  protected:
-  void GetPlatformDisplayInfo(mozilla::widget::InfoObject& aObj) override;
-
   void ImportGPUDeviceData(const mozilla::gfx::GPUDeviceData& aData) override;
   void ImportContentDeviceData(
       const mozilla::gfx::ContentDeviceData& aData) override;
