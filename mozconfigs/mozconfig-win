@@ -17,7 +17,6 @@ ac_add_options --enable-application=browser
 ac_add_options --disable-artifact-builds
 
 # Build for Windows
-ac_add_options --enable-bootstrap
 ac_add_options --disable-update-agent
 
 CROSS_COMPILE=0
