@@ -161,6 +161,11 @@ r3dfox-transparency =
 
 r3dfox-transparency-desc = Force enables caption bar transparency, may have varying results.
 
+r3dfox-e10s =
+    .label = (BETA) Disable e10s (multiprocess)
+
+r3dfox-e10s-desc = Disables e10s/electrolysis. There are still multiple processes from other browser components with this enabled. Not recommended unless you know what you are doing.
+
 ## General Section - Startup
 
 startup-header = Startup
