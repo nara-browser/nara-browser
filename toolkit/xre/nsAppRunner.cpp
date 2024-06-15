@@ -539,6 +539,7 @@ enum E10sStatus {
 static bool gBrowserTabsRemoteAutostart = false;
 static E10sStatus gBrowserTabsRemoteStatus;
 static bool gBrowserTabsRemoteAutostartInitialized = false;
+const char* kForceDisableE10sPref = "browser.e10s.disabled";
 
 namespace mozilla {
 
@@ -582,17 +583,13 @@ bool BrowserTabsRemoteAutostart() {
   }
 
   // Uber override pref for emergency blocking
-  if (gBrowserTabsRemoteAutostart) {
-    const char* forceDisable = PR_GetEnv("MOZ_FORCE_DISABLE_E10S");
-#if defined(MOZ_WIDGET_ANDROID)
-    // We need this for xpcshell on Android
-    if (forceDisable && *forceDisable) {
-#else
-    // The environment variable must match the application version to apply.
-    if (forceDisable && gAppData && !strcmp(forceDisable, gAppData->version)) {
-#endif
-      gBrowserTabsRemoteAutostart = false;
-      status = kE10sForceDisabled;
+  // Long-term, hopefully we can make all tests e10s-friendly,
+  // then we could remove this automation-only env variable.
+  if (gBrowserTabsRemoteAutostart &&
+      (Preferences::GetBool(kForceDisableE10sPref, false) ||
+       EnvHasValue("MOZ_FORCE_DISABLE_E10S"))) {
+    gBrowserTabsRemoteAutostart = false;
+    status = kE10sForceDisabled;
     }
   }
 
