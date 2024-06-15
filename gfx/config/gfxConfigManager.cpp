@@ -19,7 +19,6 @@
 #ifdef XP_WIN
 #  include "mozilla/WindowsVersion.h"
 #  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "mozilla/gfx/DisplayConfigWindows.h"
 #endif
 
 namespace mozilla {
@@ -58,8 +57,6 @@ void gfxConfigManager::Init() {
   mWrEnvForceEnabled = gfxPlatform::WebRenderEnvvarEnabled();
 
 #ifdef XP_WIN
-  DeviceManagerDx::Get()->CheckHardwareStretchingSupport(mHwStretchingSupport);
-  mScaledResolution = HasScaledResolution();
   mIsWin10OrLater = IsWin10OrLater();
   mIsWin11OrLater = IsWin11OrLater();
   mWrCompositorDCompRequired = true;
