@@ -70,7 +70,6 @@ EXPORTS.mozilla.gfx += [
     "AllOfDcomp.h",
     "D3D11Checks.h",
     "DeviceManagerDx.h",
-    "DisplayConfigWindows.h",
     "FontPaletteCache.h",
     "PrintPromise.h",
     "PrintTarget.h",
@@ -163,7 +162,6 @@ elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
         "PrintTargetWindows.h",
     ]
     SOURCES += [
-        "DisplayConfigWindows.cpp",
         "gfxDWriteCommon.cpp",
         "gfxDWriteFonts.cpp",
         "gfxGDIFont.cpp",
