@@ -1845,7 +1845,7 @@ pref("browser.newtabpage.activity-stream.hideTopSitesWithSearchParam", "mfadid=a
 pref("browser.newtabpage.activity-stream.telemetry", false);
 
 // Separate about welcome
-pref("browser.aboutwelcome.enabled", true);
+pref("browser.aboutwelcome.enabled", false);
 // Used to set multistage welcome UX
 pref("browser.aboutwelcome.screens", "");
 // Used to enable window modal onboarding
@@ -2392,7 +2392,7 @@ pref("signon.management.page.fileImport.enabled", true);
 // "offered"        - we have offered feature to user and they have not yet made a decision.
 // "enabled"        - user opted in to the feature.
 // "disabled"       - user opted out of the feature.
-pref("signon.firefoxRelay.feature", false);
+pref("signon.firefoxRelay.feature", "disabled");
 pref("signon.management.page.breach-alerts.enabled", true);
 pref("signon.management.page.vulnerable-passwords.enabled", true);
 pref("signon.management.page.sort", "name");
@@ -2923,7 +2923,7 @@ pref("first-startup.timeout", 30000);
 #endif
 
 // Shows 'View Image Info' item in the image context menu
-  pref("browser.menu.showViewImageInfo", true);
+pref("browser.menu.showViewImageInfo", true);
 
 // Handing URLs to external apps via the "Share URL" menu item could allow a proxy bypass
 #ifdef MOZ_PROXY_BYPASS_PROTECTION
