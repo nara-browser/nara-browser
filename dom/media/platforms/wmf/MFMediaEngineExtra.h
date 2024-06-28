@@ -4,6 +4,7 @@
 
 #ifndef DOM_MEDIA_PLATFORM_WMF_MFMEDIAENGINEEXTRA_H
 #define DOM_MEDIA_PLATFORM_WMF_MFMEDIAENGINEEXTRA_H
+#define WINVER 0x0601
 
 #include <evr.h>
 #include <mfmediaengine.h>
