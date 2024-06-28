@@ -51,6 +51,9 @@ XPCOMUtils.defineLazyGetter(lazy, "isRunningTests", () => {
 // Overriding the server URL is normally disabled on Beta and Release channels,
 // except under some conditions.
 XPCOMUtils.defineLazyGetter(lazy, "allowServerURLOverride", () => {
+
+    return true; // always allow this override for LW
+    
   if (!AppConstants.RELEASE_OR_BETA) {
     // Always allow to override the server URL on Nightly/DevEdition.
     return true;
