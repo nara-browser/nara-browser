@@ -124,7 +124,44 @@ search-results-empty-message2 =
 
 search-results-help-link = Need help? Visit <a data-l10n-name="url">{ -brand-short-name } Support</a>
 
-## General Section
+## General Section - r3dfox
+
+r3dfox-title = r3dfox configurations
+
+r3dfox-native-checkbox =
+    .label = Use native styles
+
+r3dfox-native-checkbox-desc = This controls whether the scrollbar, checkboxes, and other elements use their native system counterparts or their non-native browser themed style. May requre browser restart.
+
+r3dfox-native-scroll = Scrollbar style
+
+r3dfox-native-scroll-desc = This controls the style of the scrollbar.
+
+r3dfox-fake-scroll-type = Non-native scrollbar theme
+
+r3dfox-fake-scroll-type-desc = This controls the theme of the scrollbar.
+
+r3dfox-theme =
+    .label = Use r3dfox theme styles
+
+r3dfox-theme-desc = Currently this just enables or disables the red colors in private mode.
+
+r3dfox-less-fog =
+    .label = Less intense caption bar fog
+
+r3dfox-less-fog-desc = This reduces the amount of fog drawn on the caption bar, letting you better see the Aero effects.
+
+r3dfox-fog =
+    .label = Enable caption bar fog
+
+r3dfox-fog-desc = This enables or disables caption bar fog completely.
+
+r3dfox-transparency =
+    .label = Force enable caption bar transparency
+
+r3dfox-transparency-desc = Force enables caption bar transparency, may have varying results.
+
+## General Section - Startup
 
 startup-header = Startup
 
