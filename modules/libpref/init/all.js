@@ -692,6 +692,7 @@ pref("r3dfox.customizations.enabled", true);
 pref("r3dfox.less.aero.fog", true);
 pref("r3dfox.aero.fog", true);
 pref("r3dfox.force.transparency", false);
+pref("r3dfox.e10s.disabled", false);
 
 // Enable JS dump() function.
 // IMPORTANT: These prefs must be here even though they're also defined in
