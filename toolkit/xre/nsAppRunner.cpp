@@ -590,7 +590,6 @@ bool BrowserTabsRemoteAutostart() {
        EnvHasValue("MOZ_FORCE_DISABLE_E10S"))) {
     gBrowserTabsRemoteAutostart = false;
     status = kE10sForceDisabled;
-    }
   }
 
   gBrowserTabsRemoteStatus = status;

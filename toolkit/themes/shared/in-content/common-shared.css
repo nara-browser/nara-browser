@@ -260,7 +260,7 @@
 :root {
   font: message-box;
   appearance: none;
-  background-: var(--in-content-page-background);
+  background: var(--in-content-page-background);
   color: var(--in-content-page-color);
 }
 
