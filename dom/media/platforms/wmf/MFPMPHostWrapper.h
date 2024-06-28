@@ -4,6 +4,7 @@
 
 #ifndef DOM_MEDIA_PLATFORM_WMF_MPMPHOSTWRAPPER_H
 #define DOM_MEDIA_PLATFORM_WMF_MPMPHOSTWRAPPER_H
+#define WINVER 0x0601
 
 #include <wrl.h>
 #include <wrl/client.h>

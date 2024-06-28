@@ -8,6 +8,7 @@
 #include "mozIDownloadPlatform.h"
 
 #include "nsISupports.h"
+#include "shlobj.h"
 
 class DownloadPlatform : public mozIDownloadPlatform {
  protected:

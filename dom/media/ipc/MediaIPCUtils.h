@@ -6,6 +6,7 @@
 
 #ifndef mozilla_dom_media_MediaIPCUtils_h
 #define mozilla_dom_media_MediaIPCUtils_h
+#define WINVER 0x0601
 
 #include <type_traits>
 

@@ -4,6 +4,7 @@
 
 #ifndef DOM_MEDIA_IPC_MFCDMCHILD_H_
 #define DOM_MEDIA_IPC_MFCDMCHILD_H_
+#define WINVER 0x0601
 
 #include <unordered_map>
 #include "mozilla/Atomics.h"

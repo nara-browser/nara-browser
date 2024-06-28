@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#define WINVER 0x0601
 #include "DownloadPlatform.h"
 #include "nsNetUtil.h"
 #include "nsString.h"
@@ -10,6 +11,7 @@
 #include "nsIURI.h"
 #include "nsIFile.h"
 #include "xpcpublic.h"
+#include <shlobj.h>
 
 #include "mozilla/dom/Promise.h"
 #include "mozilla/Preferences.h"
@@ -17,7 +19,6 @@
 #define PREF_BDM_ADDTORECENTDOCS "browser.download.manager.addToRecentDocs"
 
 #ifdef XP_WIN
-#  include <shlobj.h>
 #  include <urlmon.h>
 #  include "nsILocalFileWin.h"
 #  include "WinTaskbar.h"

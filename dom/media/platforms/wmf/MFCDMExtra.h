@@ -4,6 +4,7 @@
 
 #ifndef DOM_MEDIA_PLATFORM_WMF_MFCDMEXTRA_H
 #define DOM_MEDIA_PLATFORM_WMF_MFCDMEXTRA_H
+#define WINVER 0x0601
 
 // Currently, we build with WINVER=0x601 (Win7), which means the declarations in
 // mfcontentdecryptionmodule.h will not be visible, which is only available on

@@ -4,6 +4,7 @@
 
 #ifndef DOM_MEDIA_IPC_MFCDMPARENT_H_
 #define DOM_MEDIA_IPC_MFCDMPARENT_H_
+#define WINVER 0x0A00
 
 #include <wrl.h>
 
