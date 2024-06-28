@@ -20,6 +20,7 @@
   transition: opacity 0.5s ease;
   z-index: 2147483645;
   outline: none;
+  -moz-theme: non-native;
   color: var(--fc-color);
 }
 @media (prefers-color-scheme: dark) {
