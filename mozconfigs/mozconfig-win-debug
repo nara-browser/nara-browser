@@ -1,0 +1,66 @@
+## Copyright (c) 2024 Alex313031.
+
+## .mozconfig for compiling a debug build of r3dfox Browser for Windows natively
+
+#Uncomment for x86 build
+#ac_add_options --target=i686 
+
+# Build only Mercury
+ac_add_options --enable-application=browser
+ac_add_options --disable-artifact-builds
+
+# Build for Windows
+ac_add_options --enable-bootstrap
+ac_add_options --disable-update-agent
+
+CROSS_COMPILE=0
+export MOZ_INCLUDE_SOURCE_INFO=1
+
+# Optimization settings
+ac_add_options --disable-tests
+ac_add_options --enable-clang-plugin
+ac_add_options --enable-optimize="-Qunused-arguments -O2 -O3 -msse2 -Xclang -O3"
+ac_add_options --enable-rust-simd
+ac_add_options --enable-hardening
+
+# Media settings
+ac_add_options --enable-sandbox
+ac_add_options --enable-raw
+ac_add_options --enable-webrtc
+ac_add_options --enable-jxl
+ac_add_options --enable-av1
+
+# Add-ons
+ac_add_options --allow-addon-sideload
+ac_add_options --with-unsigned-addon-scopes=app,system
+
+# Enable if update server and signatures are figured out
+#ac_add_options --enable-nss-mar
+
+# Client settings
+ac_add_options --disable-backgroundtasks
+ac_add_options --disable-bits-download
+ac_add_options --disable-crashreporter
+ac_add_options --disable-default-browser-agent
+ac_add_options --disable-eme
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-notification-server
+ac_add_options --disable-parental-controls
+ac_add_options --disable-update-agent
+ac_add_options --disable-updater
+ac_add_options --without-wasm-sandboxed-libraries
+export MOZ_SOURCE_CHANGESET=iloveneedingtobodgechangesetfornoreason
+mk_add_options MOZ_CRASHREPORTER=0
+mk_add_options MOZ_DATA_REPORTING=0
+mk_add_options MOZ_SERVICES_HEALTHREPORT=0
+mk_add_options MOZ_TELEMETRY_REPORTING=
+export MOZ_CRASHREPORTER=0
+export MOZ_DATA_REPORTING=0
+export MOZ_REQUIRE_SIGNING=
+export MOZ_TELEMETRY_REPORTING=
+
+# Branding
+ac_add_options --with-app-name=r3dfox
+ac_add_options --with-app-basename=r3dfox
+ac_add_options --with-branding=browser/branding/r3dfox
+ac_add_options --with-distribution-id=com.eclipse.r3dfox
