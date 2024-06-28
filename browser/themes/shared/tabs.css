@@ -34,6 +34,9 @@
      ThemeVariableMap.sys.mjs when the user has a theme that defines
      ntp_background. */
   --tabpanel-background-color: #25003e !important;
+  @media (-moz-bool-pref: "r3dfox.customizations.enabled") {
+    --tabpanel-background-color: linear-gradient(to bottom, #480808 0%,#240103 93%,#200000 97%,#1E0000 100%) !important;
+  }
 }
 
 :root[uidensity=compact] {

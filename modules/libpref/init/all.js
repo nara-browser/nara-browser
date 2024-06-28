@@ -685,6 +685,14 @@ pref("toolkit.telemetry.dap.logLevel", "Warn");
 // Extra logging for AsyncShutdown barriers and phases
 pref("toolkit.asyncshutdown.log", false);
 
+// r3dfox preferences
+// Red tint on private window
+pref("r3dfox.customizations.enabled", true);
+// Aero fog configurations
+pref("r3dfox.less.aero.fog", true);
+pref("r3dfox.aero.fog", true);
+pref("r3dfox.force.transparency", false);
+
 // Enable JS dump() function.
 // IMPORTANT: These prefs must be here even though they're also defined in
 // StaticPrefList.yaml. They are required because MOZILLA_OFFICIAL is false in
