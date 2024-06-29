@@ -93,8 +93,11 @@ if CONFIG["OS_ARCH"] == "WINNT":
         "WindowsUnicode.cpp",
     ]
 
+    DEFINES["PSAPI_VERSION"] = "1"
+
     OS_LIBS += [
         "dbghelp",
+        "psapi",
         "oleaut32",
         "ole32",
     ]
