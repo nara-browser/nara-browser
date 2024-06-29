@@ -8,10 +8,10 @@
 html.private {
   --in-content-page-color: white;
   --in-content-text-color: white;
-  --in-content-page-background: #25003e;
-  @media (-moz-bool-pref: "r3dfox.customizations.enabled") {
+/*  --in-content-page-background: #25003e;
+  @supports -moz-bool-pref("r3dfox.customizations.enabled") {*/
     --in-content-page-background: linear-gradient(to bottom, #480808 0%,#240103 93%,#200000 97%,#1E0000 100%);
-  }
+/*  }*/
   --in-content-link-color-hover: white;
   --in-content-link-color-active: white;
   --in-content-banner-background: #f9f9fe;

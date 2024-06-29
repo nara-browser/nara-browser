@@ -15,7 +15,7 @@ toolbarbutton menupopup[placespopup] {
   --nested-margin: calc(-1 * (var(--arrowpanel-menuitem-padding-inline) + var(--panel-shadow-margin)));
 }
 
-@media (-moz-bool-pref: "widget.non-native-theme.enabled") {
+@supports -moz-bool-pref("widget.non-native-theme.enabled") {
   @media not (-moz-windows-non-native-menus) {
     toolbarbutton menupopup[placespopup] {
       --panel-shadow-margin: 4px;
