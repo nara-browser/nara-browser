@@ -88,6 +88,9 @@ if CONFIG["OS_ARCH"] == "WINNT":
             libpath_flag + OBJDIR + "/winlauncher/freestanding",
         ]
     else:
+        DIRS += [
+            "pbproxy",
+        ]
         # Build libraries required for non-launcher build.
         OS_LIBS += [
             "ntdll",
