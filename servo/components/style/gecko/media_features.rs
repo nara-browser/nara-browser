@@ -614,7 +614,7 @@ fn eval_scripting(context: &Context, query_value: Option<Scripting>) -> bool {
     }
 }
 
-fn eval_moz_ev_native_controls_patch(context: &Context) -> bool {
+fn eval_moz_ev_native_controls_patch(_context: &Context) -> bool {
 	true
 }
 
