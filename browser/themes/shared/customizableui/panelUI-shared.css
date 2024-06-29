@@ -240,7 +240,7 @@ toolbarbutton menupopup[placespopup] {
   --panel-padding: var(--panel-subview-body-padding);
 }
 
-@media (-moz-bool-pref: "widget.non-native-theme.enabled") {
+@supports -moz-bool-pref("widget.non-native-theme.enabled") {
   toolbarbutton menupopup[placespopup] menupopup[placespopup] {
     /* Align non top-level menupopup's first menuitem with the menuitem that opened it.
      * The 1px is for the menupopup's border. */
@@ -986,7 +986,7 @@ panelview .toolbarbutton-1,
   flex-shrink: 0;
 }
 
-@media (-moz-bool-pref: "widget.non-native-theme.enabled") {
+@supports -moz-bool-pref("widget.non-native-theme.enabled") {
   toolbarbutton menupopup[placespopup] > :is(menu, menuitem) {
     appearance: none;
     margin: var(--arrowpanel-menuitem-margin);

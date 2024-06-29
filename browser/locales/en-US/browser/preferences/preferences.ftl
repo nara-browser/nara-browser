@@ -144,22 +144,22 @@ r3dfox-fake-scroll-type-desc = This controls the theme of the scrollbar.
 r3dfox-theme =
     .label = Use r3dfox theme styles
 
-r3dfox-theme-desc = Currently this just enables or disables the red colors in private mode.
+r3dfox-theme-desc = Currently this does nothing. It's broken in 115 ESR and I have no idea how to fix.
 
 r3dfox-less-fog =
     .label = Less intense caption bar fog
 
-r3dfox-less-fog-desc = This reduces the amount of fog drawn on the caption bar, letting you better see the Aero effects.
+r3dfox-less-fog-desc = Currently this does nothing. It's broken in 115 ESR and I have no idea how to fix.
 
 r3dfox-fog =
     .label = Enable caption bar fog
 
-r3dfox-fog-desc = This enables or disables caption bar fog completely.
+r3dfox-fog-desc = Currently this does nothing. It's broken in 115 ESR and I have no idea how to fix.
 
 r3dfox-transparency =
     .label = Force enable caption bar transparency
 
-r3dfox-transparency-desc = Force enables caption bar transparency, may have varying results.
+r3dfox-transparency-desc = Currently this does nothing. It's broken in 115 ESR and I have no idea how to fix.
 
 r3dfox-e10s =
     .label = (BETA) Disable e10s (multiprocess)

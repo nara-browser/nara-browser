@@ -33,10 +33,10 @@
      !important overrides the direct setting of this variable in
      ThemeVariableMap.sys.mjs when the user has a theme that defines
      ntp_background. */
-  --tabpanel-background-color: #25003e !important;
-  @media (-moz-bool-pref: "r3dfox.customizations.enabled") {
+/*  --tabpanel-background-color: #25003e !important;
+  @supports -moz-bool-pref("r3dfox.customizations.enabled") {*/
     --tabpanel-background-color: linear-gradient(to bottom, #480808 0%,#240103 93%,#200000 97%,#1E0000 100%) !important;
-  }
+/*  }*/
 }
 
 :root[uidensity=compact] {
@@ -65,7 +65,7 @@ toolbar[brighttext] {
   appearance: none;
   padding: 0;
   color-scheme: unset;
-  background-color: var(--tabpanel-background-color);
+  background: var(--tabpanel-background-color);
 }
 
 #tabbrowser-tabs,
