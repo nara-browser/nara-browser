@@ -1227,7 +1227,7 @@ const nsTArray<GfxDriverInfo>& GfxInfo::GetGfxDriverInfo() {
      */
     APPEND_TO_DRIVER_BLOCKLIST(
         OperatingSystem::WindowsXP, DeviceFamily::NvidiaAll,
-        GfxDriverInfo::optionalFeatures,
+        GfxDriverInfo::allFeatures,
         nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION, DRIVER_LESS_THAN_OR_EQUAL,
         V(6, 14, 11, 8745), "FEATURE_FAILURE_NV_XP",
         "nVidia driver > 187.45");
@@ -1243,7 +1243,7 @@ const nsTArray<GfxDriverInfo>& GfxInfo::GetGfxDriverInfo() {
      */
     APPEND_TO_DRIVER_BLOCKLIST(
         OperatingSystem::WindowsVista, DeviceFamily::NvidiaAll,
-        GfxDriverInfo::optionalFeatures,
+        GfxDriverInfo::allFeatures,
         nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION, DRIVER_LESS_THAN_OR_EQUAL,
         V(8, 15, 11, 8745), "FEATURE_FAILURE_NV_VISTA_15",
         "nVidia driver > 187.45");
@@ -1254,7 +1254,7 @@ const nsTArray<GfxDriverInfo>& GfxInfo::GetGfxDriverInfo() {
         "FEATURE_FAILURE_NV_W7_15", "nVidia driver > 187.45");
     APPEND_TO_DRIVER_BLOCKLIST_RANGE(
         OperatingSystem::WindowsVista, DeviceFamily::NvidiaAll,
-        GfxDriverInfo::optionalFeatures,
+        GfxDriverInfo::allFeatures,
         nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
         DRIVER_BETWEEN_INCLUSIVE_START, V(8, 16, 10, 0000), V(8, 16, 11, 8745),
         "FEATURE_FAILURE_NV_VISTA_16", "nVidia driver > 187.45");
@@ -1267,7 +1267,7 @@ const nsTArray<GfxDriverInfo>& GfxInfo::GetGfxDriverInfo() {
     // required.
     APPEND_TO_DRIVER_BLOCKLIST_RANGE(
         OperatingSystem::WindowsVista, DeviceFamily::NvidiaAll,
-        GfxDriverInfo::optionalFeatures,
+        GfxDriverInfo::allFeatures,
         nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
         DRIVER_BETWEEN_INCLUSIVE_START, V(8, 17, 10, 0000), V(8, 17, 11, 8745),
         "FEATURE_FAILURE_NV_VISTA_17", "nVidia driver > 187.45");
@@ -1466,7 +1466,7 @@ const nsTArray<GfxDriverInfo>& GfxInfo::GetGfxDriverInfo() {
     // and going until 6.14.10.5218. See bug 919454 and bug 949275 for more info.
     APPEND_TO_DRIVER_BLOCKLIST_RANGE(
         OperatingSystem::WindowsXP, DeviceFamily::IntelGMAX4500HD,
-        GfxDriverInfo::optionalFeatures,
+        GfxDriverInfo::allFeatures,
         nsIGfxInfo::FEATURE_BLOCKED_DRIVER_VERSION,
         DRIVER_BETWEEN_EXCLUSIVE, V(6, 14, 10, 5076), V(6, 14, 10, 5218),
         "FEATURE_FAILURE_INTEL_8", "6.14.10.5218");
