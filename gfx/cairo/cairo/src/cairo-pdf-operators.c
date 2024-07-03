@@ -1568,16 +1568,10 @@ _cairo_pdf_operators_tag_begin (cairo_pdf_operators_t *pdf_operators,
 	    return status;
     }
 
-    if (mcid >= 0) {
-	_cairo_output_stream_printf (pdf_operators->stream,
-				     "/%s << /MCID %d >> BDC\n",
-				     tag_name,
-				     mcid);
-    } else {
-	_cairo_output_stream_printf (pdf_operators->stream,
-				     "/%s BMC\n",
-				     tag_name);
-    }
+    _cairo_output_stream_printf (pdf_operators->stream,
+				 "/%s << /MCID %d >> BDC\n",
+				 tag_name,
+				 mcid);
 
     return _cairo_output_stream_get_status (pdf_operators->stream);
 }

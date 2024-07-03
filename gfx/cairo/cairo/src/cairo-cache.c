@@ -56,6 +56,7 @@ _cairo_cache_entry_is_non_zero (const void *entry)
  * @keys_equal: a function to return %TRUE if two keys are equal
  * @entry_destroy: destroy notifier for cache entries
  * @max_size: the maximum size for this cache
+ * Returns: the newly created #cairo_cache_t
  *
  * Creates a new cache using the keys_equal() function to determine
  * the equality of entries.
@@ -83,8 +84,6 @@ _cairo_cache_entry_is_non_zero (const void *entry)
  * _cairo_cache_freeze() and _cairo_cache_thaw() calls can be
  * used to establish a window during which no automatic removal of
  * entries will occur.
- *
- * Returns: the newly created #cairo_cache_t
  **/
 cairo_status_t
 _cairo_cache_init (cairo_cache_t		*cache,
@@ -316,18 +315,18 @@ _cairo_cache_foreach (cairo_cache_t		      *cache,
 			       closure);
 }
 
-uintptr_t
+unsigned long
 _cairo_hash_string (const char *c)
 {
     /* This is the djb2 hash. */
-    uintptr_t hash = _CAIRO_HASH_INIT_VALUE;
+    unsigned long hash = _CAIRO_HASH_INIT_VALUE;
     while (c && *c)
 	hash = ((hash << 5) + hash) + *c++;
     return hash;
 }
 
-uintptr_t
-_cairo_hash_bytes (uintptr_t hash,
+unsigned long
+_cairo_hash_bytes (unsigned long hash,
 		   const void *ptr,
 		   unsigned int length)
 {
@@ -336,11 +335,4 @@ _cairo_hash_bytes (uintptr_t hash,
     while (length--)
 	hash = ((hash << 5) + hash) + *bytes++;
     return hash;
-}
-
-uintptr_t
-_cairo_hash_uintptr (uintptr_t hash,
-                     uintptr_t u)
-{
-    return _cairo_hash_bytes (hash, &u, sizeof(u));
 }
