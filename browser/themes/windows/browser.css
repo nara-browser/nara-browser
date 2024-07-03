@@ -92,10 +92,18 @@
 }
 
 /* Add a fog for background tabs to be visible on Windows 7 glass window background */
-@media (-moz-platform: windows-win7) {
+@media (-moz-platform: windows-win7),
+       (-moz-platform: windows-win8) {
   @media (-moz-windows-default-theme) {
     #TabsToolbar:not([lwtheme]) {
-      background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 40%, transparent);
+      @media (-moz-bool-pref: "r3dfox.aero.fog") {
+        @media (-moz-bool-pref: "r3dfox.less.aero.fog") {
+          background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 40%, transparent) !important;
+        }
+        @media not (-moz-bool-pref: "r3dfox.less.aero.fog") {
+          background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 80%, transparent) !important;
+        }
+      }
     }
   }
 }
@@ -122,13 +130,15 @@
    * titlebar. We side-step this issue by layering our own background underneath
    * the tabs.
    */
-  :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar:not([lwtheme]) {
-    background-image: linear-gradient(transparent, ActiveCaption);
-    background-size: auto 200%;
-  }
+  @media (-moz-bool-pref: "r3dfox.aero.fog") {
+    :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar:not([lwtheme]) {
+      background-image: linear-gradient(transparent, ActiveCaption) !important;
+      background-size: auto 200% !important;
+    }
 
-  :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar:not([lwtheme]):-moz-window-inactive {
-    background-image: linear-gradient(transparent, InactiveCaption);
+    :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar:not([lwtheme]):-moz-window-inactive {
+      background-image: linear-gradient(transparent, InactiveCaption) !important;
+    }
   }
 
   /* Add a window top border for webextension themes */
@@ -465,5 +475,29 @@ menupopup[touchmode] :is(menu, menuitem, menucaption) {
      one below the navigation buttons in the content context menu should. */
   #context-sep-navigation {
     padding-inline: 0;
+  }
+}
+
+@media (-moz-bool-pref: "r3dfox.customizations.enabled") {
+  #main-window[privatebrowsingmode="temporary"] #TabsToolbar {
+    background-color: #CC190032 !important;
+  /*  background-image: radial-gradient(ellipse at bottom, rgba(255,165,165,0.8), rgba(255,165,165,0.5) 40%, transparent); */
+  }
+}
+
+@media (-moz-bool-pref: "r3dfox.force.transparency") {
+  :root {
+    --lwt-additional-images: none !important;
+    --lwt-header-image: none !important;
+  }
+
+  #navigator-toolbox {
+    background-color: transparent !important;
+    @media (-moz-bool-pref: "r3dfox.less.aero.fog") {
+      background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 40%, transparent) !important;
+    }
+    @media not (-moz-bool-pref: "r3dfox.less.aero.fog") {
+      background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 80%, transparent) !important;
+    }
   }
 }
