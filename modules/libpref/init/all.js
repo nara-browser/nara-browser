@@ -655,6 +655,8 @@ pref("r3dfox.less.aero.fog", true);
 pref("r3dfox.aero.fog", true);
 // Force (kinda) transparency.
 pref("r3dfox.force.transparency", false);
+// Black or white caption text.
+pref("r3dfox.caption.text.color", false);
 
 // Enable JS dump() function.
 // IMPORTANT: These prefs must be here even though they're also defined in

@@ -355,3 +355,10 @@
     -moz-default-appearance: -moz-win-browsertabbar-toolbox;
   }
 }
+
+@media (-moz-bool-pref: "r3dfox.caption.text.color") {
+  #TabsToolbar {
+    color: white !important;
+    --toolbarbutton-icon-fill: currentColor !important;
+  }
+}
