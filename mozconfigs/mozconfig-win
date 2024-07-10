@@ -2,6 +2,10 @@
 
 ##Uncomment PGO for release build
 
+#Uncomment for x86 build
+#ac_add_options --target=i686 
+#ac_add_options --disable-sandbox
+
 # Please do not redistribute this build with official branding if you are not part of Eclipse Community.
 ac_add_options --enable-official-branding
 ac_add_options --with-app-name=r3dfox_esr
@@ -9,26 +13,20 @@ ac_add_options --with-app-basename=r3dfox_esr
 export MOZ_OFFICIAL_BRANDING=1
 export MOZ_ESR=1
 
-# 16 jobs for 16 cores
-mk_add_options MOZ_MAKE_FLAGS="-j16"
-
-# x64 build
-ac_add_options --target=x86_64-rust9x-windows-msvc
-ac_add_options --with-toolchain-prefix=x86_64-rust9x-windows-msvc
-
-# x86 build
-#ac_add_options --target=i686-rust9x-windows-msvc
-#ac_add_options --with-toolchain-prefix=i686-rust9x-windows-msvc
-
-# Build only r3dfox
-ac_add_options --enable-application=browser
-ac_add_options --disable-artifact-builds
-
 # Updater stuffs
 ac_add_options --disable-update-agent
 ac_add_options --disable-updater
 # Enable if update server and signatures are figured out
 #ac_add_options --enable-nss-mar
+
+# 16 jobs for 16 cores
+mk_add_options MOZ_MAKE_FLAGS="-j16"
+
+# Build only r3dfox
+ac_add_options --enable-application=browser
+ac_add_options --disable-artifact-builds
+export MOZ_INCLUDE_SOURCE_INFO=1
+export MOZ_SOURCE_CHANGESET=iloveneedingtobodgechangesetfornoreason
 
 # Optimization settings
 ac_add_options --disable-accessibility
@@ -45,7 +43,9 @@ ac_add_options --enable-optimize="-Qunused-arguments -O2 -msse2 -Xclang -O3"
 ac_add_options --enable-release
 ac_add_options --enable-rust-simd
 ac_add_options --enable-strip
+MOZ_OPTIMIZE=1
 export MOZ_OPTIMIZE=1
+mk_add_options MOZ_OPTIMIZE=1
 export MOZILLA_OFFICIAL=1
 export STRIP_FLAGS="--strip-debug --strip-unneeded"
 
@@ -53,8 +53,6 @@ export STRIP_FLAGS="--strip-debug --strip-unneeded"
 ac_add_options --enable-av1
 ac_add_options --enable-jxl
 ac_add_options --enable-raw
-# Test if disabling sandbox fixes 32 bit Vista
-ac_add_options --enable-sandbox
 ac_add_options --enable-webrtc
 
 # Add-ons
@@ -71,13 +69,13 @@ ac_add_options --disable-maintenance-service
 ac_add_options --disable-notification-server
 ac_add_options --disable-parental-controls
 ac_add_options --without-wasm-sandboxed-libraries
+mk_add_options MOZ_CRASHREPORTER=0
+mk_add_options MOZ_DATA_REPORTING=0
 mk_add_options MOZ_SERVICES_HEALTHREPORT=0
-export CROSS_COMPILE=0
+mk_add_options MOZ_TELEMETRY_REPORTING=
 export MOZ_CRASHREPORTER=0
 export MOZ_DATA_REPORTING=0
-export MOZ_INCLUDE_SOURCE_INFO=1
 export MOZ_REQUIRE_SIGNING=
-export MOZ_SOURCE_CHANGESET=iloveneedingtobodgechangesetfornoreason
 export MOZ_TELEMETRY_REPORTING=
 
 # Set -Copt-level=3
