@@ -9461,14 +9461,6 @@ bool nsWindow::HandleAppCommandMsg(const MSG& aAppCommandMsg,
   return consumed;
 }
 
-#ifdef DEBUG
-nsresult nsWindow::SetHiDPIMode(bool aHiDPI) {
-  return WinUtils::SetHiDPIMode(aHiDPI);
-}
-
-nsresult nsWindow::RestoreHiDPIMode() { return WinUtils::RestoreHiDPIMode(); }
-#endif
-
 mozilla::Maybe<UINT> nsWindow::GetHiddenTaskbarEdge() {
   HMONITOR windowMonitor = ::MonitorFromWindow(mWnd, MONITOR_DEFAULTTONEAREST);
 

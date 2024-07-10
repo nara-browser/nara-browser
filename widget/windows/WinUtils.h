@@ -611,11 +611,6 @@ class WinUtils {
 
   static bool GetTimezoneName(wchar_t* aBuffer);
 
-#ifdef DEBUG
-  static nsresult SetHiDPIMode(bool aHiDPI);
-  static nsresult RestoreHiDPIMode();
-#endif
-
   static bool GetAutoRotationState(AR_STATE* aRotationState);
 
  private:
