@@ -635,12 +635,6 @@ EXTERN!{extern "system" {
     fn RtlReleaseSRWLockShared(
         SRWLock: PRTL_SRWLOCK,
     );
-    fn RtlTryAcquireSRWLockExclusive(
-        SRWLock: PRTL_SRWLOCK,
-    ) -> BOOLEAN;
-    fn RtlTryAcquireSRWLockShared(
-        SRWLock: PRTL_SRWLOCK,
-    ) -> BOOLEAN;
     fn RtlAcquireReleaseSRWLockExclusive(
         SRWLock: PRTL_SRWLOCK,
     );

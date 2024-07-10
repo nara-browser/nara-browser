@@ -33,12 +33,6 @@ extern "system" {
     pub fn AcquireSRWLockShared(
         SRWLock: PSRWLOCK,
     );
-    pub fn TryAcquireSRWLockExclusive(
-        SRWLock: PSRWLOCK,
-    ) -> BOOLEAN;
-    pub fn TryAcquireSRWLockShared(
-        SRWLock: PSRWLOCK,
-    ) -> BOOLEAN;
     pub fn InitializeCriticalSection(
         lpCriticalSection: LPCRITICAL_SECTION,
     );
