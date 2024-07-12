@@ -187,6 +187,11 @@ IPDL_SOURCES += [
     "PHttpTransaction.ipdl",
 ]
 
+EXTRA_JS_MODULES += [
+    "UserAgentOverrides.sys.mjs",
+    "UserAgentUpdates.sys.mjs",
+]
+
 include("/ipc/chromium/chromium-config.mozbuild")
 
 FINAL_LIBRARY = "xul"
@@ -207,6 +212,7 @@ if CONFIG["MOZ_AUTH_EXTENSION"]:
     ]
 
 EXTRA_JS_MODULES += [
+    "UAOverridesBootstrapper.sys.mjs",
     "WellKnownOpportunisticUtils.sys.mjs",
 ]
 
