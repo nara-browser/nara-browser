@@ -78,6 +78,8 @@ pref("general.useragent.compatMode.firefox", true);
 
 // Enable site specific overrides to fix shitty websites
 pref("general.useragent.site_specific_overrides", true);
+pref("general.useragent.override.discord.com", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0");
+pref("general.useragent.override.whatsapp.com", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0");
 
 pref("general.config.obscure_value", 13); // for MCD .cfg files
 
