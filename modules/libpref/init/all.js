@@ -653,8 +653,10 @@ pref("toolkit.telemetry.user_characteristics_ping.logLevel", "Warn");
 pref("toolkit.asyncshutdown.log", false);
 
 // r3dfox preferences.
-// Red tint on private window.
+// r3dfox theme.
 pref("r3dfox.customizations.enabled", true);
+// r3dfox colors.
+pref("r3dfox.colors.enabled", true);
 // Less Aero fog than stock 115 by default.
 pref("r3dfox.less.aero.fog", true);
 // Ability to enable/disable Aero fog.
