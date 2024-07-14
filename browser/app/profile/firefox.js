@@ -35,7 +35,7 @@ pref("extensions.webextOptionalPermissionPrompts", true);
 pref("extensions.postDownloadThirdPartyPrompt", true);
 
 // Preferences for AMO integration
-pref("extensions.getAddons.cache.enabled", false);
+pref("extensions.getAddons.cache.enabled", true);
 pref("extensions.getAddons.get.url", "https://services.addons.mozilla.org/api/v4/addons/search/?guid=%IDS%&lang=%LOCALE%");
 pref("extensions.getAddons.search.browseURL", "https://addons.mozilla.org/%LOCALE%/firefox/search?q=%TERMS%&platform=%OS%&appver=%VERSION%");
 pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firefox/");
@@ -1118,6 +1118,13 @@ pref("privacy.temporary_permission_expire_time_ms",  3600000);
 // See bug 791594
 pref("privacy.authPromptSpoofingProtection",         true);
 
+// Enable DNT header by default
+pref("privacy.donottrackheader.enabled", true);
+
+// Enable GPC by default
+pref("privacy.globalprivacycontrol.enabled", true);
+pref("privacy.globalprivacycontrol.was_ever_enabled", true);
+
 // Enable GPC if the user turns it on in about:preferences
 pref("privacy.globalprivacycontrol.functionality.enabled",  true);
 
@@ -2047,7 +2054,7 @@ pref("browser.translation.neverForLanguages", "");
 pref("browser.translations.enable", true);
 
 // Enable the new Firefox Translations Settings UI Design
-pref("browser.translations.newSettingsUI.enable", false);
+pref("browser.translations.newSettingsUI.enable", true);
 
 // Enable Firefox Select translations powered by Bergamot translations
 // engine https://browser.mt/.
@@ -2213,7 +2220,7 @@ pref("browser.promo.pin.enabled", false);
 // Set to true for Fx113 (see bug 1808611)
 pref("browser.promo.cookiebanners.enabled", false);
 
-pref("browser.contentblocking.report.hide_vpn_banner", false);
+pref("browser.contentblocking.report.hide_vpn_banner", true);
 pref("browser.contentblocking.report.vpn_sub_id", "sub_HrfCZF7VPHzZkA");
 
 pref("browser.contentblocking.report.monitor.url", "https://monitor.firefox.com/?entrypoint=protection_report_monitor&utm_source=about-protections");
@@ -3000,16 +3007,10 @@ pref("browser.pdfjs.feature-tour", "{\"screen\":\"\",\"complete\":false}");
 
 // Enables cookie banner handling in Nightly in Private Browsing Mode. See
 // StaticPrefList.yaml for a description of the prefs.
-#ifdef NIGHTLY_BUILD
-  pref("cookiebanners.service.mode.privateBrowsing", 1);
-#endif
+pref("cookiebanners.service.mode.privateBrowsing", 1);
 
-#if defined(EARLY_BETA_OR_EARLIER)
-  // Enables the cookie banner desktop UI.
-  pref("cookiebanners.ui.desktop.enabled", true);
-#else
-  pref("cookiebanners.ui.desktop.enabled", false);
-#endif
+// Enables the cookie banner desktop UI.
+pref("cookiebanners.ui.desktop.enabled", true);
 
 // When true, shows a one-time feature callout for cookie banner blocking.
 pref("cookiebanners.ui.desktop.showCallout", false);
