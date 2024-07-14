@@ -91,23 +91,6 @@
   }
 }
 
-/* Add a fog for background tabs to be visible on Windows 7 glass window background */
-@media (-moz-platform: windows-win7),
-       (-moz-platform: windows-win8) {
-  @media (-moz-windows-default-theme) {
-    #TabsToolbar:not([lwtheme]) {
-      @media (-moz-bool-pref: "r3dfox.aero.fog") {
-        @media (-moz-bool-pref: "r3dfox.less.aero.fog") {
-          background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 40%, transparent);
-        }
-        @media not (-moz-bool-pref: "r3dfox.less.aero.fog") {
-          background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 80%, transparent);
-        }
-      }
-    }
-  }
-}
-
 @media not (-moz-windows-compositor),
        not (-moz-windows-default-theme),
        (-moz-platform: windows-win8) {
@@ -124,23 +107,6 @@
 }
 
 @media (-moz-windows-classic) {
-  /**
-   * In the classic themes, the titlebar has a horizontal gradient, which is
-   * problematic for reading the text of background tabs when they're in the
-   * titlebar. We side-step this issue by layering our own background underneath
-   * the tabs.
-   */
-  @media (-moz-bool-pref: "r3dfox.aero.fog") {
-    :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar:not([lwtheme]) {
-      background-image: linear-gradient(transparent, ActiveCaption);
-      background-size: auto 200%;
-    }
-
-    :root[tabsintitlebar]:not([sizemode=fullscreen]) #TabsToolbar:not([lwtheme]):-moz-window-inactive {
-      background-image: linear-gradient(transparent, InactiveCaption);
-    }
-  }
-
   /* Add a window top border for webextension themes */
   :root[lwtheme][tabsintitlebar][sizemode="normal"] #navigator-toolbox {
     background-image: linear-gradient(to bottom,
@@ -475,29 +441,5 @@ menupopup[touchmode] :is(menu, menuitem, menucaption) {
      one below the navigation buttons in the content context menu should. */
   #context-sep-navigation {
     padding-inline: 0;
-  }
-}
-
-@media (-moz-bool-pref: "r3dfox.customizations.enabled") {
-  #main-window[privatebrowsingmode="temporary"] #TabsToolbar {
-    background-color: #CC190032 !important;
-  /*  background-image: radial-gradient(ellipse at bottom, rgba(255,165,165,0.8), rgba(255,165,165,0.5) 40%, transparent); */
-  }
-}
-
-@media (-moz-bool-pref: "r3dfox.force.transparency") {
-  :root {
-    --lwt-additional-images: none !important;
-    --lwt-header-image: none !important;
-  }
-
-  #navigator-toolbox {
-    background-color: transparent !important;
-    @media (-moz-bool-pref: "r3dfox.less.aero.fog") {
-      background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 40%, transparent) !important;
-    }
-    @media not (-moz-bool-pref: "r3dfox.less.aero.fog") {
-      background-image: radial-gradient(ellipse at bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.5) 80%, transparent) !important;
-    }
   }
 }
