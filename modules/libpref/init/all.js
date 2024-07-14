@@ -620,7 +620,7 @@ pref("accessibility.typeaheadfind.enablesound", true);
   pref("accessibility.typeaheadfind.prefillwithselection", true);
 #endif
 pref("accessibility.typeaheadfind.matchesCountLimit", 1000);
-pref("findbar.highlightAll", false);
+pref("findbar.highlightAll", true);
 pref("findbar.entireword", false);
 pref("findbar.iteratorTimeout", 100);
 // matchdiacritics: controls the find bar's diacritic matching

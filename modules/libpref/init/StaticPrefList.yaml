@@ -1613,7 +1613,7 @@
 # no (0), yes (1), or default (2), which is true everywhere except Linux.
 - name: browser.tabs.inTitlebar
   type: int32_t
-  value: 2
+  value: 1
   mirror: always
 
 # If set, use DocumentChannel to directly initiate loads entirely
@@ -2019,7 +2019,7 @@
 # 2: Reject-all if possible, otherwise accept-all.
 - name: cookiebanners.service.mode
   type: uint32_t
-  value: 0
+  value: 1
   mirror: always
 
 # When set to true, cookie banners are detected and detection events are
@@ -2034,7 +2034,7 @@
 # options as the normal browsing pref above.
 - name: cookiebanners.service.mode.privateBrowsing
   type: uint32_t
-  value: 0
+  value: 1
   mirror: always
 
 # Enables use of global CookieBannerRules, which apply to all sites. This is
@@ -15458,11 +15458,7 @@
 # controls). Maybe it's just fine.
 - name: widget.non-native-theme.use-theme-accent
   type: RelaxedAtomicBool
-#ifdef XP_WIN
-  value: false
-#else
   value: true
-#endif
   mirror: always
 
 # Whether we should try to use WebRender to render widgets.
