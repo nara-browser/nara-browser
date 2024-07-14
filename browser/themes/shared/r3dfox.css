@@ -2,7 +2,6 @@
 
 @media (-moz-bool-pref: "r3dfox.colors.enabled") {
   :root {
-    background: var(--in-content-page-background) !important;
     --arrowpanel-border-color: light-dark(rgb(255, 60, 60), rgb(155, 60, 60)) !important;
     --toolbar-field-focus-border-color: light-dark(rgb(255, 40, 40), rgb(155, 60, 60)) !important;
     --sidebar-border-color: light-dark(rgb(255, 60, 60), rgb(155, 60, 60)) !important;
