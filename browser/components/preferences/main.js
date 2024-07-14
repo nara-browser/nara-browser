@@ -64,6 +64,7 @@ Preferences.addAll([
   { id: "widget.non-native-theme.enabled", type: "bool",  inverted: true },
   { id: "widget.ev-native-controls-patch.scrollbar-style", type: "int" },
   { id: "widget.non-native-theme.scrollbar.style", type: "int" },
+  { id: "r3dfox.colors.enabled", type: "bool" },
   { id: "r3dfox.customizations.enabled", type: "bool" },
   { id: "r3dfox.less.aero.fog", type: "bool" },
   { id: "r3dfox.aero.fog", type: "bool" },

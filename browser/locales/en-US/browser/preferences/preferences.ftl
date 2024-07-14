@@ -158,7 +158,12 @@ r3dfox-fake-scroll-type-desc = This controls the theme of the scrollbar.
 r3dfox-theme =
     .label = Use r3dfox theme styles
 
-r3dfox-theme-desc = Currently this just enables or disables the red colors in private mode.
+r3dfox-theme-desc = This enables or disables the r3dfox theme.
+
+r3dfox-colors =
+    .label = Use r3dfox colors
+
+r3dfox-colors-desc = This enables or disables the r3dfox colors.
 
 r3dfox-less-fog =
     .label = Less intense caption bar fog

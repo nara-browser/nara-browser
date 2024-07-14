@@ -284,3 +284,10 @@
   skin/classic/browser/weather/night-partly-cloudy-with-showers.svg (../shared/weather/night-partly-cloudy-with-showers.svg)
   skin/classic/browser/weather/night-partly-cloudy-with-thunderstorms.svg (../shared/weather/night-partly-cloudy-with-thunderstorms.svg)
   skin/classic/browser/weather/night-mostly-cloudy-with-flurries.svg (../shared/weather/night-mostly-cloudy-with-flurries.svg)
+
+browser.jar:
+%  skin browser classic/1.0 %skin/classic/browser/
+ skin/classic/browser/r3dfox.css     (../shared/r3dfox.css)
+ skin/classic/browser/r3d_center.svg            (../shared/icons/r3d_center.svg)
+ skin/classic/browser/r3d_left_corner.svg            (../shared/icons/r3d_left_corner.svg)
+ skin/classic/browser/r3d_right_corner.svg            (../shared/icons/r3d_right_corner.svg) 
