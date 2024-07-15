@@ -3229,7 +3229,7 @@
 # information should be collected / submitted.
 - name: dom.private-attribution.submission.enabled
   type: bool
-  value: true
+  value: false
   mirror: always
 
 # Is support for Window.paintWorklet enabled?
