@@ -695,8 +695,8 @@ pref("toolkit.telemetry.dap.logLevel", "Warn");
 pref("toolkit.asyncshutdown.log", false);
 
 // r3dfox preferences.
-// r3dfox colors.
-pref("r3dfox.colors.enabled", true);
+// r3dfox customizations.
+pref("r3dfox.customizations.enabled", true);
 // Less Aero fog than stock 115 by default.
 pref("r3dfox.less.aero.fog", true);
 // Ability to enable/disable Aero fog.

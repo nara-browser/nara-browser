@@ -34,7 +34,7 @@
   /* Add a fog for background tabs to be visible on Windows 7 glass window background */
   @media (-moz-platform: windows-win7),
          (-moz-platform: windows-win8) {
-    @media (-moz-windows-default-theme) {
+    @media (-moz-windows-default-theme), (-moz-windows-compositor) {
       #TabsToolbar {
 /*        @supports -moz-bool-pref("r3dfox.aero.fog") {
           @supports -moz-bool-pref("r3dfox.less.aero.fog") {*/
@@ -45,7 +45,7 @@
           }
         }*/
         color: black;
-        --toolbarbutton-icon-fill: currentColor;
+        --toolbarbutton-icon-fill: black;
       }
     }
   }

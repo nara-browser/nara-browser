@@ -164,7 +164,7 @@ r3dfox-transparency-desc = Currently this does nothing. It's broken in 115 ESR a
 r3dfox-caption-text =
     .label = White caption text
 
-r3dfox-caption-text-desc = Enable for white caption text.
+r3dfox-caption-text-desc = Enable for white caption text. It's the only option to actually work here but requires browser restart.
 
 r3dfox-e10s =
     .label = (BETA) Disable e10s (multiprocess)
