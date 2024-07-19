@@ -114,6 +114,9 @@ pref("browser.cache.offline.capacity",         512000);
 // Don't show "Open with" option on download dialog if true.
 pref("browser.download.forbid_open_with", false);
 
+// Enable e10s by default.
+pref("browser.e10s.disabled", false);
+
 // Enable indexedDB logging.
 pref("dom.indexedDB.logging.enabled", true);
 // Detailed output in log messages.
@@ -685,14 +688,17 @@ pref("toolkit.telemetry.dap.logLevel", "Warn");
 // Extra logging for AsyncShutdown barriers and phases
 pref("toolkit.asyncshutdown.log", false);
 
-// r3dfox preferences
-// Red tint on private window
-pref("r3dfox.customizations.enabled", true);
-// Aero fog configurations
+// r3dfox preferences.
+// r3dfox colors.
+pref("r3dfox.colors.enabled", true);
+// Less Aero fog than stock 115 by default.
 pref("r3dfox.less.aero.fog", true);
+// Ability to enable/disable Aero fog.
 pref("r3dfox.aero.fog", true);
+// Force (kinda) transparency.
 pref("r3dfox.force.transparency", false);
-pref("browser.e10s.disabled", false);
+// Black or white caption text.
+pref("r3dfox.caption.text.color", false);
 
 // Enable JS dump() function.
 // IMPORTANT: These prefs must be here even though they're also defined in
