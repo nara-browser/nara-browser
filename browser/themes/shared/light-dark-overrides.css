@@ -34,7 +34,7 @@
   /* Black toolbar text for 7 to make stuffs visible */
   @media (-moz-platform: windows-win7),
          (-moz-platform: windows-win8) {
-    @media (-moz-windows-default-theme) {
+    @media (-moz-windows-default-theme), (-moz-windows-compositor) {
       #TabsToolbar {
         color: black;
         --toolbarbutton-icon-fill: currentColor;
