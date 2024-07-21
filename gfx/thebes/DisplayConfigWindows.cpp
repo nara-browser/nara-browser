@@ -7,6 +7,7 @@
 #include <windows.h>
 
 #include "DisplayConfigWindows.h"
+#include "mozilla/WindowsVersion.h"
 
 namespace mozilla {
 namespace gfx {
@@ -20,6 +21,8 @@ optional<DisplayConfig> GetDisplayConfig() {
   UINT32 numModes;
   vector<DISPLAYCONFIG_PATH_INFO> paths;
   vector<DISPLAYCONFIG_MODE_INFO> modes;
+  if (!IsWin7OrLater()) return {};
+
   do {
     result = GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, &numPaths,
                                          &numModes);
