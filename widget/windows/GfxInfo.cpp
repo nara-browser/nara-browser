@@ -2085,24 +2085,26 @@ nsresult GfxInfo::GetFeatureStatusImpl(
       }
       return NS_OK;
     }
-  }
 
-/*    // special-case the WinXP test slaves: they have out-of-date drivers, but we still want to
+    // special-case the WinXP test slaves: they have out-of-date drivers, but we still want to
     // whitelist them, actually we do know that this combination of device and driver version
     // works well.
     if (mWindowsVersion == kWindowsXP &&
-        adapterVendorID.Equals(GfxDriverInfo::GetDeviceVendor(VendorNVIDIA), nsCaseInsensitiveStringComparator()) &&
-        adapterDeviceID.LowerCaseEqualsLiteral("0x0861") && // GeForce 9400
+        adapterVendorID.Equals(
+            GfxDriverInfo::GetDeviceVendor(DeviceVendor::NVIDIA),
+            nsCaseInsensitiveStringComparator) &&
+        adapterVendorID.LowerCaseEqualsLiteral("0x0861") && // GeForce 9400
         driverVersion == V(6,14,11,7756))
     {
       *aStatus = FEATURE_STATUS_OK;
       return NS_OK;
     }
-*/
+
     // Windows Server 2003 should be just like Windows XP for present purpose, but still has a different version number.
     // OTOH Windows Server 2008 R1 and R2 already have the same version numbers as Vista and Seven respectively
     if (os == OperatingSystem::WindowsServer2003)
       os = OperatingSystem::WindowsXP;
+  }
 
   return GfxInfoBase::GetFeatureStatusImpl(
       aFeature, aStatus, aSuggestedDriverVersion, aDriverInfo, aFailureId, &os);
