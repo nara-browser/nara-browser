@@ -7,7 +7,7 @@ mod windows_imports {
     use super::{DWORD, BOOL, HANDLE, HMODULE, FARPROC};
     pub(super) use std::os::windows::ffi::{OsStrExt, OsStringExt};
     windows_targets::link!("kernel32.dll" "system" fn GetLastError() -> DWORD);
-    windows_targets::link!("kernel32.dll" "system" fn SetErrorMode(umode: UINT) -> UINT);
+    windows_targets::link!("kernel32.dll" "system" fn SetErrorMode(umode: u32) -> u32);
     windows_targets::link!("kernel32.dll" "system" fn GetModuleHandleExW(flags: u32, module_name: *const u16, module: *mut HMODULE) -> BOOL);
     windows_targets::link!("kernel32.dll" "system" fn FreeLibrary(module: HMODULE) -> BOOL);
     windows_targets::link!("kernel32.dll" "system" fn LoadLibraryExW(filename: *const u16, file: HANDLE, flags: DWORD) -> HMODULE);
