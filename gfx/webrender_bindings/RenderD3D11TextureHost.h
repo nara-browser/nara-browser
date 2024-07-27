@@ -27,7 +27,8 @@ namespace wr {
 class RenderDXGITextureHost final : public RenderTextureHostSWGL {
  public:
   RenderDXGITextureHost(
-      const HANDLE aHandle, Maybe<layers::GpuProcessTextureId>& aGpuProcessTextureId,
+      const RefPtr<gfx::FileHandleWrapper> aHandle,
+      const Maybe<layers::GpuProcessTextureId>& aGpuProcessTextureId,
       const uint32_t aArrayIndex, const gfx::SurfaceFormat aFormat,
       const gfx::ColorSpace2 aColorSpace, const gfx::ColorRange aColorRange,
       const gfx::IntSize aSize, const bool aHasKeyedMutex,
@@ -103,7 +104,7 @@ class RenderDXGITextureHost final : public RenderTextureHostSWGL {
 
   RefPtr<gl::GLContext> mGL;
 
-  const HANDLE mHandle;
+  const RefPtr<gfx::FileHandleWrapper> mHandle;
   const Maybe<layers::GpuProcessTextureId> mGpuProcessTextureId;
   const Maybe<layers::GpuProcessQueryId> mGpuProcessQueryId;
   RefPtr<ID3D11Texture2D> mTexture;
@@ -140,12 +141,10 @@ class RenderDXGITextureHost final : public RenderTextureHostSWGL {
 
 class RenderDXGIYCbCrTextureHost final : public RenderTextureHostSWGL {
  public:
-  explicit RenderDXGIYCbCrTextureHost(HANDLE (&aHandles)[3],
-                                      gfx::YUVColorSpace aYUVColorSpace,
-                                      gfx::ColorDepth aColorDepth,
-                                      gfx::ColorRange aColorRange,
-                                      gfx::IntSize aSizeY,
-                                      gfx::IntSize aSizeCbCr);
+  explicit RenderDXGIYCbCrTextureHost(
+      RefPtr<gfx::FileHandleWrapper> (&aHandles)[3],
+      gfx::YUVColorSpace aYUVColorSpace, gfx::ColorDepth aColorDepth,
+      gfx::ColorRange aColorRange, gfx::IntSize aSizeY, gfx::IntSize aSizeCbCr);
 
   RenderDXGIYCbCrTextureHost* AsRenderDXGIYCbCrTextureHost() override {
     return this;
@@ -203,7 +202,7 @@ class RenderDXGIYCbCrTextureHost final : public RenderTextureHostSWGL {
 
   RefPtr<gl::GLContext> mGL;
 
-  HANDLE mHandles[3];
+  RefPtr<gfx::FileHandleWrapper> mHandles[3];
   RefPtr<ID3D11Texture2D> mTextures[3];
   RefPtr<IDXGIKeyedMutex> mKeyedMutexs[3];
 
