@@ -9,7 +9,6 @@
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/PrivateAttributionBinding.h"
 #include "mozilla/Components.h"
-#include "mozilla/StaticPrefs_datareporting.h"
 #include "nsIGlobalObject.h"
 #include "nsIPrivateAttributionService.h"
 #include "nsXULAppAPI.h"
@@ -30,15 +29,6 @@ JSObject* PrivateAttribution::WrapObject(JSContext* aCx,
 }
 
 PrivateAttribution::~PrivateAttribution() = default;
-
-bool PrivateAttribution::ShouldRecord() {
-#ifdef MOZ_TELEMETRY_REPORTING
-  return (StaticPrefs::dom_private_attribution_submission_enabled() &&
-          StaticPrefs::datareporting_healthreport_uploadEnabled());
-#else
-  return false;
-#endif
-}
 
 bool PrivateAttribution::GetSourceHostIfNonPrivate(nsACString& aSourceHost,
                                                    ErrorResult& aRv) {
@@ -65,7 +55,7 @@ bool PrivateAttribution::GetSourceHostIfNonPrivate(nsACString& aSourceHost,
 
 void PrivateAttribution::SaveImpression(
     const PrivateAttributionImpressionOptions& aOptions, ErrorResult& aRv) {
-  if (!ShouldRecord()) {
+  if (!StaticPrefs::dom_private_attribution_submission_enabled()) {
     return;
   }
 
@@ -99,7 +89,7 @@ void PrivateAttribution::SaveImpression(
 
 void PrivateAttribution::MeasureConversion(
     const PrivateAttributionConversionOptions& aOptions, ErrorResult& aRv) {
-  if (!ShouldRecord()) {
+  if (!StaticPrefs::dom_private_attribution_submission_enabled()) {
     return;
   }
 
