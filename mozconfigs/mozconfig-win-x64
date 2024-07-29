@@ -2,9 +2,8 @@
 
 ##Uncomment PGO for release build
 
-#Uncomment for x86 build
-#ac_add_options --target=i686 
-#ac_add_options --disable-sandbox
+# x64 build
+ac_add_options --target=x86_64 
 
 # Please do not redistribute this build with official branding if you are not part of Eclipse Community.
 ac_add_options --with-app-name=r3dfox
@@ -89,8 +88,8 @@ ac_add_options RUSTC_OPT_LEVEL="3"
 # Enable LTO
 export MOZ_LTO=1
 ac_add_options MOZ_LTO=1
-#export MOZ_PGO=1
-#ac_add_options MOZ_PGO=1
+export MOZ_PGO=1
+ac_add_options MOZ_PGO=1
 
 if test "$GEN_PGO"; then
     ac_add_options --enable-profile-generate
