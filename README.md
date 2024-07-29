@@ -1,8 +1,8 @@
 # r3dfox (r3dactedfox)
 
-r3dfox is a fork of the open source web browser Mozilla Firefox made specifically for Windows 7 and 8 compatibility. There may be other tweaks, however the goal is to remain as close to stock Firefox as possible.
+r3dfox is a fork of the open source web browser Mozilla Firefox made specifically for Windows Vista, 7, and 8 compatibility. There may be other tweaks, however the goal is to remain as close to stock Firefox as possible.
 
-Limited compatibility with the Windows XP and Vista extended kernels is offered at the current time, however they may not be tested consistently. Any issues that may arise that are hard to diagnose may be left to the extended kernel provider to fix.
+Limited compatibility with One Core API on Windows XP is offered at the current time, however this is not tested consistently. Any issues that may arise that are hard to diagnose may be left to the extended kernel provider to fix.
 
 # Original repository readme
 
