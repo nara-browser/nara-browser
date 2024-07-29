@@ -1,10 +1,8 @@
 ## mozconfig for compiling r3dfox Browser for Windows natively
 
-##Uncomment PGO for release build
-
-#Uncomment for x86 build
-#ac_add_options --target=i686 
-#ac_add_options --disable-sandbox
+# x86 build
+ac_add_options --target=i686 
+ac_add_options --disable-sandbox
 
 # 16 jobs for 16 cores
 mk_add_options MOZ_MAKE_FLAGS="-j16"
