@@ -39,6 +39,9 @@
         color: black;
         --toolbarbutton-icon-fill: currentColor;
       }
+      :root {
+        --lwt-text-color: black !important;
+      }
     }
   }
 

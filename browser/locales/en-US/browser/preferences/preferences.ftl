@@ -167,6 +167,16 @@ r3dfox-colors =
 
 r3dfox-colors-desc = This enables or disables the r3dfox colors.
 
+r3dfox-menubar =
+    .label = Transparent menubar
+
+r3dfox-menubar-desc = This removes the menubar background.
+
+r3dfox-navbar =
+    .label = Translucent design
+
+r3dfox-navbar-desc = This makes the tabs, navbar, urlbar, the top part of the UI all translucent.
+
 r3dfox-less-fog =
     .label = Less intense caption bar fog
 
