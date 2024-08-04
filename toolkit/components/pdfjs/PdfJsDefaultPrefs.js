@@ -33,7 +33,7 @@ pref("pdfjs.enableHighlightFloatingButton", false);
 pref("pdfjs.enableML", false);
 pref("pdfjs.enablePermissions", false);
 pref("pdfjs.enablePrintAutoRotate", true);
-pref("pdfjs.enableScripting", true);
+pref("pdfjs.enableScripting", false);
 pref("pdfjs.enableStampEditor", true);
 pref("pdfjs.enableXfa", true);
 pref("pdfjs.externalLinkTarget", 0);
