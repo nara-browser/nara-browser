@@ -4,6 +4,10 @@ r3dfox is a fork of the open source web browser Mozilla Firefox made specificall
 
 Limited compatibility with One Core API on Windows XP is offered at the current time, however this is not tested consistently. Any issues that may arise that are hard to diagnose may be left to the extended kernel provider to fix.
 
+# Important note for people contributing for the Mac version
+
+Do not contact K4sum1 or any other people in the Eclipse Community. This is a semi-unofficial branch to work on legacy macOS releases (10.14 "Mojave" and below).
+
 # Original repository readme
 
 An explanation of the Firefox Source Code Directory Structure and links to
