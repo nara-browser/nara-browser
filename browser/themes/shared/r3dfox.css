@@ -53,6 +53,10 @@
   #main-window[privatebrowsingmode="temporary"] #TabsToolbar {
     background-color: #CC190032 !important;
   }
+
+  #main-menubar:not([lwtheme]):-moz-window-inactive {
+    color: black !important;
+  }
 }
 
 /* Aero fog and other settings */
@@ -99,7 +103,7 @@
   :root {
     --lwt-text-color: white !important;
   }
-  #main-menubar:not([lwtheme], :-moz-window-inactive) {
+  #main-menubar:not([lwtheme]):-moz-window-inactive {
     color: white !important;
   }
 }
