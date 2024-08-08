@@ -265,12 +265,7 @@
       margin-inline-end: calc(-1 * var(--tab-first-last-inline-margin) / 2 + 1px) !important;
       z-index: 0 !important;
   }
-  
-  menupopup[needsgutter] menu:not([icon], .menu-iconic),
-  menupopup[needsgutter] menuitem:not([checked="true"], [icon], .menuitem-iconic) {
-      padding-inline-start: 1em !important;
-  }
-  
+
   /* ---------------------------------------- Tabs ---------------------------------------- */
   
   :root[tabsintitlebar] #titlebar:-moz-window-inactive {
