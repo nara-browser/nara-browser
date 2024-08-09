@@ -57,6 +57,10 @@
   #main-menubar:not([lwtheme]):-moz-window-inactive {
     color: black !important;
   }
+
+  #toolbar-menubar:not([lwtheme]):-moz-window-inactive {
+    color: black !important;
+  }
 }
 
 /* Aero fog and other settings */
@@ -104,6 +108,9 @@
     --lwt-text-color: white !important;
   }
   #main-menubar:not([lwtheme]):-moz-window-inactive {
+    color: white !important;
+  }
+  #toolbar-menubar:not([lwtheme]):-moz-window-inactive {
     color: white !important;
   }
 }
