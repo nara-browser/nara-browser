@@ -53,17 +53,13 @@
   #main-window[privatebrowsingmode="temporary"] #TabsToolbar {
     background-color: #CC190032 !important;
   }
-
-  #main-menubar:not([lwtheme]):-moz-window-inactive {
-    color: black !important;
-  }
-
-  #toolbar-menubar:not([lwtheme]):-moz-window-inactive {
-    color: black !important;
-  }
 }
 
 /* Aero fog and other settings */
+
+#main-menubar:not([lwtheme]):-moz-window-inactive {
+  color: black !important;
+}
 
 @media (-moz-bool-pref: "r3dfox.aero.fog") {
   @media (-moz-platform: windows-win7), (-moz-platform: windows-win8) {
@@ -108,9 +104,6 @@
     --lwt-text-color: white !important;
   }
   #main-menubar:not([lwtheme]):-moz-window-inactive {
-    color: white !important;
-  }
-  #toolbar-menubar:not([lwtheme]):-moz-window-inactive {
     color: white !important;
   }
 }
