@@ -573,10 +573,10 @@ add_flag(
 
 set_define("_USE_MATH_DEFINES", True)  # Otherwise Windows' math.h doesn't #define M_PI.
 
-WINVER = dependable("0600")
+WINVER = dependable("0A00")
 set_define("WINVER", depends(WINVER)(lambda WINVER: f"0x{WINVER}"))
 set_define("_WIN32_WINNT", depends(WINVER)(lambda WINVER: f"0x{WINVER}"))
-set_define("_WIN32_IE", "0x0800")
+set_define("_WIN32_IE", "0x0A00")
 
 with only_when(depends(c_compiler)(lambda c: c.type == "clang-cl")):
 
@@ -608,7 +608,7 @@ with only_when(depends(c_compiler)(lambda c: c.type == "clang-cl")):
     set_define("HAVE_IO_H", True)
 
     def win32_subsystem_version():
-        return "10.0"
+        return "6.00"
 
     set_config(
         "WIN32_CONSOLE_EXE_LDFLAGS",
