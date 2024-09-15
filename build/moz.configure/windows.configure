@@ -581,16 +581,16 @@ set_define("_WIN32_IE", "0x0A00")
 with only_when(depends(c_compiler)(lambda c: c.type == "clang-cl")):
 
     # Check if WIN_UCRT_REDIST_DIR is set
-    if 'WIN_UCRT_REDIST_DIR' in os.environ:
-        win_ucrt_redist_dir = os.environ['WIN_UCRT_REDIST_DIR']
-    
-        # Check if the directory exists
-        if not os.path.isdir(win_ucrt_redist_dir):
-            sys.exit('Invalid Windows UCRT Redist directory: {}'.format(win_ucrt_redist_dir))
-    
-        # Normalize the directory path
-        win_ucrt_redist_dir = os.path.normpath(win_ucrt_redist_dir)
-        os.environ['WIN_UCRT_REDIST_DIR'] = win_ucrt_redist_dir
+#    if 'WIN_UCRT_REDIST_DIR' in os.environ:
+#        win_ucrt_redist_dir = os.environ['WIN_UCRT_REDIST_DIR']
+#    
+#        # Check if the directory exists
+#        if not os.path.isdir(win_ucrt_redist_dir):
+#            sys.exit('Invalid Windows UCRT Redist directory: {}'.format(win_ucrt_redist_dir))
+#    
+#        # Normalize the directory path
+#        win_ucrt_redist_dir = os.path.normpath(win_ucrt_redist_dir)
+#        os.environ['WIN_UCRT_REDIST_DIR'] = win_ucrt_redist_dir
     
     set_config("MSVC_C_RUNTIME_DLL", "vcruntime140.dll")
     set_config(
