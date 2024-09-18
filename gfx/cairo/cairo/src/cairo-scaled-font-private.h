@@ -45,8 +45,6 @@
 #include "cairo-mutex-type-private.h"
 #include "cairo-reference-count-private.h"
 
-CAIRO_BEGIN_DECLS
-
 typedef struct _cairo_scaled_glyph_page cairo_scaled_glyph_page_t;
 
 struct _cairo_scaled_font {
@@ -107,94 +105,27 @@ struct _cairo_scaled_font {
     cairo_font_extents_t fs_extents; /* font space */
 
     /* The mutex protects modification to all subsequent fields. */
-    cairo_recursive_mutex_t mutex;
+    cairo_mutex_t mutex;
 
     cairo_hash_table_t *glyphs;
     cairo_list_t glyph_pages;
     cairo_bool_t cache_frozen;
     cairo_bool_t global_cache_frozen;
-    cairo_array_t recording_surfaces_to_free; /* array of cairo_surface_t* */
 
-    cairo_list_t dev_privates;
+    /*
+     * One surface backend may store data in each glyph.
+     * Whichever surface manages to store its pointer here
+     * first gets to store data in each glyph
+     */
+    const cairo_surface_backend_t *surface_backend;
+    void *surface_private;
 
     /* font backend managing this scaled font */
     const cairo_scaled_font_backend_t *backend;
     cairo_list_t link;
 };
 
-struct _cairo_scaled_font_private {
-    cairo_list_t link;
-    const void *key;
-    void (*destroy) (cairo_scaled_font_private_t *,
-		     cairo_scaled_font_t *);
-};
-
-struct _cairo_scaled_glyph {
-    cairo_hash_entry_t hash_entry;
-
-    cairo_text_extents_t    metrics;		/* user-space metrics */
-    cairo_text_extents_t    fs_metrics;		/* font-space metrics */
-    cairo_box_t		    bbox;		/* device-space bounds */
-    int16_t                 x_advance;		/* device-space rounded X advance */
-    int16_t                 y_advance;		/* device-space rounded Y advance */
-
-    unsigned int	    has_info;
-    cairo_image_surface_t   *surface;		/* device-space image */
-    cairo_path_fixed_t	    *path;		/* device-space outline */
-    cairo_surface_t         *recording_surface;	/* device-space recording-surface */
-    cairo_image_surface_t   *color_surface;	/* device-space color image */
-
-    const void		   *dev_private_key;
-    void		   *dev_private;
-    cairo_list_t            dev_privates;
-
-    cairo_color_t           foreground_color;   /* only used for color glyphs */
-
-    /* TRUE if the recording_surface used the foreground_source to render. */
-    unsigned                recording_uses_foreground_color : 1;
-
-    /* TRUE if the recording surface uses the foreground marker. */
-    unsigned                recording_uses_foreground_marker : 1;
-
-    /* TRUE if color_glyph specifies if glyph is color or non color, FALSE if glyph color type unknown. */
-    unsigned                color_glyph_set : 1;
-
-    unsigned                color_glyph : 1;
-};
-
-struct _cairo_scaled_glyph_private {
-    cairo_list_t link;
-    const void *key;
-    void (*destroy) (cairo_scaled_glyph_private_t *,
-		     cairo_scaled_glyph_t *,
-		     cairo_scaled_font_t *);
-};
-
-cairo_private cairo_scaled_font_private_t *
-_cairo_scaled_font_find_private (cairo_scaled_font_t *scaled_font,
-				 const void *key);
-
 cairo_private void
-_cairo_scaled_font_attach_private (cairo_scaled_font_t *scaled_font,
-				   cairo_scaled_font_private_t *priv,
-				   const void *key,
-				   void (*destroy) (cairo_scaled_font_private_t *,
-						    cairo_scaled_font_t *));
-
-cairo_private cairo_scaled_glyph_private_t *
-_cairo_scaled_glyph_find_private (cairo_scaled_glyph_t *scaled_glyph,
-				 const void *key);
-
-cairo_private void
-_cairo_scaled_glyph_attach_private (cairo_scaled_glyph_t *scaled_glyph,
-				   cairo_scaled_glyph_private_t *priv,
-				   const void *key,
-				   void (*destroy) (cairo_scaled_glyph_private_t *,
-						    cairo_scaled_glyph_t *,
-						    cairo_scaled_font_t *));
-cairo_private cairo_bool_t
-_cairo_scaled_font_has_color_glyphs (cairo_scaled_font_t *scaled_font);
-
-CAIRO_END_DECLS
+_cairo_scaled_font_revoke_ownership (cairo_scaled_font_t *scaled_font);
 
 #endif /* CAIRO_SCALED_FONT_PRIVATE_H */

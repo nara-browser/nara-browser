@@ -25,39 +25,13 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "pixman-config.h"
-#endif
-
 /* Supplementary macro for setting function attributes */
-.macro pixman_asm_function_impl fname
-#ifdef ASM_HAVE_FUNC_DIRECTIVE
-	.func \fname
-#endif
-	.global \fname
-#ifdef __ELF__
-	.hidden \fname
-	.type \fname, %function
-#endif
-\fname:
-.endm
-
 .macro pixman_asm_function fname
-#ifdef ASM_LEADING_UNDERSCORE
-	pixman_asm_function_impl _\fname
-#else
-	pixman_asm_function_impl \fname
+	.func fname
+	.global fname
+#ifdef __ELF__
+	.hidden fname
+	.type fname, %function
 #endif
-.endm
-
-.macro pixman_syntax_unified
-#ifdef ASM_HAVE_SYNTAX_UNIFIED
-	.syntax unified
-#endif
-.endm
-
-.macro pixman_end_asm_function
-#ifdef ASM_HAVE_FUNC_DIRECTIVE
-	.endfunc
-#endif
+fname:
 .endm

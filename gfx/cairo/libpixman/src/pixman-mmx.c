@@ -30,7 +30,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <pixman-config.h>
+#include <config.h>
 #endif
 
 #if defined USE_X86_MMX || defined USE_ARM_IWMMXT || defined USE_LOONGSON_MMI
@@ -60,7 +60,7 @@ _mm_empty (void)
 #endif
 
 #ifdef USE_X86_MMX
-# if (defined(__SSE2__) || defined(__SUNPRO_C) || defined(_MSC_VER) || defined(_WIN64))
+# if (defined(__SUNPRO_C) || defined(_MSC_VER) || defined(_WIN64))
 #  include <xmmintrin.h>
 # else
 /* We have to compile with -msse to use xmmintrin.h, but that causes SSE
@@ -103,7 +103,7 @@ _mm_mulhi_pu16 (__m64 __A, __m64 __B)
 # endif
 #endif
 
-#ifndef _MM_SHUFFLE
+#ifndef _MSC_VER
 #define _MM_SHUFFLE(fp3,fp2,fp1,fp0) \
  (((fp3) << 6) | ((fp2) << 4) | ((fp1) << 2) | (fp0))
 #endif
@@ -137,13 +137,13 @@ _mm_mulhi_pu16 (__m64 __A, __m64 __B)
  * then define USE_M64_CASTS.
  * If __m64 is a double datatype, then define USE_M64_DOUBLE.
  */
-#if defined(_MSC_VER) && !defined(__clang__)
+#ifdef _MSC_VER
 # define M64_MEMBER m64_u64
 #elif defined(__ICC)
 # define USE_CVT_INTRINSICS
 #elif defined(USE_LOONGSON_MMI)
 # define USE_M64_DOUBLE
-#elif defined(__GNUC__) || defined(__clang__)
+#elif defined(__GNUC__)
 # define USE_M64_CASTS
 #elif defined(__SUNPRO_C)
 # if (__SUNPRO_C >= 0x5120) && !defined(__NOVECTORSIZE__)

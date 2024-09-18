@@ -43,7 +43,7 @@
 #include "cairo-types-private.h"
 
 /**
- * _cairo_cache_entry:
+ * cairo_cache_entry_t:
  *
  * A #cairo_cache_entry_t contains both a key and a value for
  * #cairo_cache_t. User-derived types for #cairo_cache_entry_t must

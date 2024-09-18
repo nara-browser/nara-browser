@@ -40,10 +40,9 @@
 
 #include "cairo.h"
 
+#if HAVE_CONFIG_H
 #include "config.h"
-
-#include <stddef.h> /* size_t */
-#include <stdint.h> /* SIZE_MAX */
+#endif
 
 /* Size in bytes of buffer to use off the stack per functions.
  * Mostly used by text functions.  For larger allocations, they'll
@@ -54,22 +53,68 @@
 
 #define CAIRO_STACK_ARRAY_LENGTH(T) (CAIRO_STACK_BUFFER_SIZE / sizeof(T))
 
-#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4)
-#ifdef __MINGW32__
-#define CAIRO_PRINTF_FORMAT(fmt_index, va_index)                        \
-	__attribute__((__format__(__MINGW_PRINTF_FORMAT, fmt_index, va_index)))
+/*
+ * The goal of this block is to define the following macros for
+ * providing faster linkage to functions in the public API for calls
+ * from within cairo.
+ *
+ * slim_hidden_proto(f)
+ * slim_hidden_proto_no_warn(f)
+ *
+ *   Declares `f' as a library internal function and hides the
+ *   function from the global symbol table.  This macro must be
+ *   expanded after `f' has been declared with a prototype but before
+ *   any calls to the function are seen by the compiler.  The no_warn
+ *   variant inhibits warnings about the return value being unused at
+ *   call sites.  The macro works by renaming `f' to an internal name
+ *   in the symbol table and hiding that.  As far as cairo internal
+ *   calls are concerned they're calling a library internal function
+ *   and thus don't need to bounce via the PLT.
+ *
+ * slim_hidden_def(f)
+ *
+ *   Exports `f' back to the global symbol table.  This macro must be
+ *   expanded right after the function definition and only for symbols
+ *   hidden previously with slim_hidden_proto().  The macro works by
+ *   adding a global entry to the symbol table which points at the
+ *   internal name of `f' created by slim_hidden_proto().
+ *
+ * Functions in the public API which aren't called by the library
+ * don't need to be hidden and re-exported using the slim hidden
+ * macros.
+ */
+#if __GNUC__ >= 3 && defined(__ELF__) && !defined(__sun)
+# define slim_hidden_proto(name)		slim_hidden_proto1(name, slim_hidden_int_name(name)) cairo_private
+# define slim_hidden_proto_no_warn(name)	slim_hidden_proto1(name, slim_hidden_int_name(name)) cairo_private_no_warn
+# define slim_hidden_def(name)			slim_hidden_def1(name, slim_hidden_int_name(name))
+# define slim_hidden_int_name(name) INT_##name
+# define slim_hidden_proto1(name, internal)				\
+  extern __typeof (name) name						\
+	__asm__ (slim_hidden_asmname (internal))
+# define slim_hidden_def1(name, internal)				\
+  extern __typeof (name) EXT_##name __asm__(slim_hidden_asmname(name))	\
+	__attribute__((__alias__(slim_hidden_asmname(internal))))
+# define slim_hidden_ulp		slim_hidden_ulp1(__USER_LABEL_PREFIX__)
+# define slim_hidden_ulp1(x)		slim_hidden_ulp2(x)
+# define slim_hidden_ulp2(x)		#x
+# define slim_hidden_asmname(name)	slim_hidden_asmname1(name)
+# define slim_hidden_asmname1(name)	slim_hidden_ulp #name
 #else
-#define CAIRO_PRINTF_FORMAT(fmt_index, va_index)                        \
-	__attribute__((__format__(__printf__, fmt_index, va_index)))
+# define slim_hidden_proto(name)		int _cairo_dummy_prototype(void)
+# define slim_hidden_proto_no_warn(name)	int _cairo_dummy_prototype(void)
+# define slim_hidden_def(name)			int _cairo_dummy_prototype(void)
 #endif
+
+#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4)
+#define CAIRO_PRINTF_FORMAT(fmt_index, va_index) \
+	__attribute__((__format__(__printf__, fmt_index, va_index)))
 #else
 #define CAIRO_PRINTF_FORMAT(fmt_index, va_index)
 #endif
 
+/* slim_internal.h */
 #define CAIRO_HAS_HIDDEN_SYMBOLS 1
-#if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)) && \
-    (defined(__ELF__) || defined(__APPLE__)) &&			\
-    !defined(__sun)
+#if (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)) && defined(__ELF__) && !defined(__sun)
 #define cairo_private_no_warn	__attribute__((__visibility__("hidden")))
 #elif defined(__SUNPRO_C) && (__SUNPRO_C >= 0x550)
 #define cairo_private_no_warn	__hidden
@@ -81,7 +126,6 @@
 #ifndef WARN_UNUSED_RESULT
 #define WARN_UNUSED_RESULT
 #endif
-
 /* Add attribute(warn_unused_result) if supported */
 #define cairo_warn	    WARN_UNUSED_RESULT
 #define cairo_private	    cairo_private_no_warn cairo_warn
@@ -137,40 +181,70 @@
 #endif
 
 #if defined(__GNUC__) && (__GNUC__ > 2) && defined(__OPTIMIZE__)
-#define likely(expr) (__builtin_expect (!!(expr), 1))
-#define unlikely(expr) (__builtin_expect (!!(expr), 0))
+#define _CAIRO_BOOLEAN_EXPR(expr)                   \
+ __extension__ ({                               \
+   int _cairo_boolean_var_;                         \
+   if (expr)                                    \
+      _cairo_boolean_var_ = 1;                      \
+   else                                         \
+      _cairo_boolean_var_ = 0;                      \
+   _cairo_boolean_var_;                             \
+})
+#define likely(expr) (__builtin_expect (_CAIRO_BOOLEAN_EXPR(expr), 1))
+#define unlikely(expr) (__builtin_expect (_CAIRO_BOOLEAN_EXPR(expr), 0))
 #else
 #define likely(expr) (expr)
 #define unlikely(expr) (expr)
 #endif
 
-#ifndef __GNUC__
+/*
+ * clang-cl supports __attribute__, but MSVC doesn't, so we need to make sure
+ * we do this if not GNUC but also if not clang either.
+ */
+#if !defined(__GNUC__) && !defined(__clang__)
 #undef __attribute__
 #define __attribute__(x)
 #endif
 
 #if (defined(__WIN32__) && !defined(__WINE__)) || defined(_MSC_VER)
-#define access _access
-#ifndef R_OK
-#define R_OK 4
-#endif
-#define fdopen _fdopen
-#define hypot _hypot
-#define pclose _pclose
+#define snprintf _snprintf
 #define popen _popen
-#define strdup _strdup
-#define unlink _unlink
-#if _MSC_VER < 1900
-  #define vsnprintf _vsnprintf
-  #define snprintf _snprintf
-#endif
+#define pclose _pclose
+#define hypot _hypot
 #endif
 
 #ifdef _MSC_VER
+
+#define HAVE_WIN32_ATOMIC_PRIMITIVES 1
+
 #ifndef __cplusplus
 #undef inline
 #define inline __inline
 #endif
+
+/* there are currently linkage problems that arise when trying to include intrin.h in c++:
+ * D:\sdks\v7.0\include\winnt.h(3674) : error C2733: second C linkage of overloaded function '_interlockedbittestandset' not allowed
+ * so avoid defining ffs in c++ code for now */
+#ifndef  __cplusplus
+/* Add a definition of ffs */
+#include <intrin.h>
+#pragma intrinsic(_BitScanForward)
+static __forceinline int
+ffs (int x)
+{
+    unsigned long i;
+
+    if (_BitScanForward(&i, x) != 0)
+	return i + 1;
+
+    return 0;
+}
+#endif
+
+#elif defined(__WIN32__) && defined(__GNUC__)
+
+#define ffs(x) __builtin_ffs(x)
+
 #endif
 
 #if defined(_MSC_VER) && defined(_M_IX86)
@@ -198,57 +272,6 @@
 #ifdef __STRICT_ANSI__
 #undef inline
 #define inline __inline__
-#endif
-
-/* size_t add/multiply with overflow check.
- *
- * These _cairo_fallback_*_size_t_overflow() functions are always defined
- * to allow them to be tested in the test suite.  They are used
- * if no compiler builtin is available.
- */
-static cairo_always_inline cairo_bool_t
-_cairo_fallback_add_size_t_overflow(size_t a, size_t b, size_t *c)
-{
-    if (b > SIZE_MAX - a)
-        return 1;
-
-    *c = a + b;
-    return 0;
-}
-
-static cairo_always_inline cairo_bool_t
-_cairo_fallback_mul_size_t_overflow(size_t a, size_t b, size_t *c)
-{
-    if (b != 0 && a > SIZE_MAX / b)
-        return 1;
-
-    *c = a * b;
-    return 0;
-}
-
-/* Clang defines __GNUC__ so check clang builtins before gcc.
- * MSVC does not support feature macros so hide the __has_builtin inside the #if __clang__ block
- */
-#ifdef __clang__
-#if defined(__has_builtin) && __has_builtin(__builtin_add_overflow)
-#define _cairo_add_size_t_overflow(a, b, c)  __builtin_add_overflow((size_t)(a), (size_t)(b), (size_t*)(c))
-#define _cairo_mul_size_t_overflow(a, b, c)  __builtin_mul_overflow((size_t)(a), (size_t)(b), (size_t*)(c))
-#endif
-#elif __GNUC__ >= 8 || (__GNUC__ >= 5 && (INTPTR_MAX == INT64_MAX))
-/* Overflow builtins are available in gcc 5 but the 32-bit version is broken on gcc < 8.
- *   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82274
- */
-#define _cairo_add_size_t_overflow(a, b, c)  __builtin_add_overflow((size_t)(a), (size_t)(b), (size_t*)(c))
-#define _cairo_mul_size_t_overflow(a, b, c)  __builtin_mul_overflow((size_t)(a), (size_t)(b), (size_t*)(c))
-#elif defined(_MSC_VER) && defined(HAVE_INTSAFE_H)
-#include <intsafe.h>
-#define _cairo_add_size_t_overflow(a,b,c) (SizeTAdd((size_t)(a), (size_t)(b), (size_t*)(c)) != S_OK)
-#define _cairo_mul_size_t_overflow(a,b,c) (SizeTMult((size_t)(a), (size_t)(b), (size_t*)(c)) != S_OK)
-#endif
-
-#ifndef _cairo_add_size_t_overflow
-#define _cairo_add_size_t_overflow _cairo_fallback_add_size_t_overflow
-#define _cairo_mul_size_t_overflow _cairo_fallback_mul_size_t_overflow
 #endif
 
 #endif

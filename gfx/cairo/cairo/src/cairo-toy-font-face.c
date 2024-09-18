@@ -39,7 +39,7 @@
  *      Behdad Esfahbod <behdad@behdad.org>
  */
 
-#define _DEFAULT_SOURCE /* for strdup() */
+#define _BSD_SOURCE /* for strdup() */
 #include "cairoint.h"
 #include "cairo-error-private.h"
 
@@ -135,7 +135,7 @@ _cairo_toy_font_face_init_key (cairo_toy_font_face_t *key,
 			       cairo_font_slant_t     slant,
 			       cairo_font_weight_t    weight)
 {
-    uintptr_t hash;
+    unsigned long hash;
 
     key->family = family;
     key->owns_family = FALSE;
@@ -145,9 +145,10 @@ _cairo_toy_font_face_init_key (cairo_toy_font_face_t *key,
 
     /* 1607 and 1451 are just a couple of arbitrary primes. */
     hash = _cairo_hash_string (family);
-    hash += ((uintptr_t) slant) * 1607;
-    hash += ((uintptr_t) weight) * 1451;
+    hash += ((unsigned long) slant) * 1607;
+    hash += ((unsigned long) weight) * 1451;
 
+    assert (hash != 0);
     key->base.hash_entry.hash = hash;
 }
 
@@ -208,7 +209,7 @@ static void
 _cairo_toy_font_face_fini (cairo_toy_font_face_t *font_face)
 {
     /* We assert here that we own font_face->family before casting
-     * away the const qualifier. */
+     * away the const qualifer. */
     assert (font_face->owns_family);
     free ((char*) font_face->family);
 
@@ -235,7 +236,7 @@ _cairo_toy_font_face_keys_equal (const void *key_a,
  * @weight: the weight for the font
  *
  * Creates a font face from a triplet of family, slant, and weight.
- * These font faces are used in implementation of the #cairo_t "toy"
+ * These font faces are used in implementation of the the #cairo_t "toy"
  * font API.
  *
  * If @family is the zero-length string "", the platform-specific default
@@ -302,17 +303,20 @@ cairo_toy_font_face_create (const char          *family,
 					  &key.base.hash_entry);
     if (font_face != NULL) {
 	if (font_face->base.status == CAIRO_STATUS_SUCCESS) {
-	    cairo_font_face_reference (&font_face->base);
+	    /* We increment the reference count here manually to avoid
+	       double-locking. */
+	    _cairo_reference_count_inc (&font_face->base.ref_count);
 	    _cairo_toy_font_face_hash_table_unlock ();
 	    return &font_face->base;
 	}
 
 	/* remove the bad font from the hash table */
 	_cairo_hash_table_remove (hash_table, &font_face->base.hash_entry);
+	font_face->base.hash_entry.hash = 0;
     }
 
     /* Otherwise create it and insert into hash table. */
-    font_face = _cairo_malloc (sizeof (cairo_toy_font_face_t));
+    font_face = malloc (sizeof (cairo_toy_font_face_t));
     if (unlikely (font_face == NULL)) {
 	status = _cairo_error (CAIRO_STATUS_NO_MEMORY);
 	goto UNWIND_HASH_TABLE_LOCK;
@@ -340,35 +344,34 @@ cairo_toy_font_face_create (const char          *family,
  UNWIND:
     return (cairo_font_face_t*) &_cairo_font_face_nil;
 }
+slim_hidden_def (cairo_toy_font_face_create);
 
-static cairo_bool_t
+static void
 _cairo_toy_font_face_destroy (void *abstract_face)
 {
     cairo_toy_font_face_t *font_face = abstract_face;
     cairo_hash_table_t *hash_table;
 
+    if (font_face == NULL ||
+	    CAIRO_REFERENCE_COUNT_IS_INVALID (&font_face->base.ref_count))
+	return;
+
     hash_table = _cairo_toy_font_face_hash_table_lock ();
     /* All created objects must have been mapped in the hash table. */
     assert (hash_table != NULL);
 
-    if (! _cairo_reference_count_dec_and_test (&font_face->base.ref_count)) {
+    if (CAIRO_REFERENCE_COUNT_HAS_REFERENCE (&font_face->base.ref_count)) {
 	/* somebody recreated the font whilst we waited for the lock */
 	_cairo_toy_font_face_hash_table_unlock ();
-	return FALSE;
+	return;
     }
 
-    /* Font faces in SUCCESS status are guaranteed to be in the
-     * hashtable. Font faces in an error status are removed from the
-     * hashtable if they are found during a lookup, thus they should
-     * only be removed if they are in the hashtable. */
-    if (likely (font_face->base.status == CAIRO_STATUS_SUCCESS) ||
-	_cairo_hash_table_lookup (hash_table, &font_face->base.hash_entry) == font_face)
+    if (font_face->base.hash_entry.hash != 0)
 	_cairo_hash_table_remove (hash_table, &font_face->base.hash_entry);
 
     _cairo_toy_font_face_hash_table_unlock ();
 
     _cairo_toy_font_face_fini (font_face);
-    return TRUE;
 }
 
 static cairo_status_t
@@ -419,7 +422,7 @@ _cairo_font_face_is_toy (cairo_font_face_t *font_face)
  * cairo_toy_font_face_get_family:
  * @font_face: A toy font face
  *
- * Gets the family name of a toy font.
+ * Gets the familly name of a toy font.
  *
  * Return value: The family name.  This string is owned by the font face
  * and remains valid as long as the font face is alive (referenced).
@@ -468,6 +471,7 @@ cairo_toy_font_face_get_slant (cairo_font_face_t *font_face)
     }
     return toy_font_face->slant;
 }
+slim_hidden_def (cairo_toy_font_face_get_slant);
 
 /**
  * cairo_toy_font_face_get_weight:
@@ -494,6 +498,7 @@ cairo_toy_font_face_get_weight (cairo_font_face_t *font_face)
     }
     return toy_font_face->weight;
 }
+slim_hidden_def (cairo_toy_font_face_get_weight);
 
 static const cairo_font_face_backend_t _cairo_toy_font_face_backend = {
     CAIRO_FONT_TYPE_TOY,

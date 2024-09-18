@@ -73,7 +73,7 @@ _lzw_buf_init (lzw_buf_t *buf, int size)
     buf->pending = 0;
     buf->pending_bits = 0;
 
-    buf->data = _cairo_malloc (size);
+    buf->data = malloc (size);
     if (unlikely (buf->data == NULL)) {
 	buf->data_size = 0;
 	buf->status = _cairo_error (CAIRO_STATUS_NO_MEMORY);
@@ -369,10 +369,10 @@ _cairo_lzw_compress (unsigned char *data, unsigned long *size_in_out)
 	 * lookup. */
 	_lzw_buf_store_bits (&buf, prev, code_bits);
 
-	if (likely (slot != NULL))
-	    LZW_SYMBOL_SET_CODE (*slot, code_next, prev, next);
+	if (bytes_remaining == 0)
+	    break;
 
-	code_next++;
+	LZW_SYMBOL_SET_CODE (*slot, code_next++, prev, next);
 
 	if (code_next > LZW_BITS_BOUNDARY(code_bits))
 	{
@@ -384,9 +384,6 @@ _cairo_lzw_compress (unsigned char *data, unsigned long *size_in_out)
 		code_next = LZW_CODE_FIRST;
 	    }
 	}
-
-	if (bytes_remaining == 0)
-	    break;
     }
 
     /* The LZW footer is an end-of-data code. */

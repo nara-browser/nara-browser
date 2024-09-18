@@ -34,7 +34,6 @@
  */
 
 #include "cairoint.h"
-#include "cairo-image-surface-private.h"
 
 /**
  * cairo_debug_reset_static_data:
@@ -56,8 +55,6 @@
  * functions have been called as necessary). If there are active cairo
  * objects, this call is likely to cause a crash, (eg. an assertion
  * failure due to a hash table being destroyed when non-empty).
- *
- * Since: 1.0
  **/
 void
 cairo_debug_reset_static_data (void)
@@ -86,9 +83,11 @@ cairo_debug_reset_static_data (void)
 
     _cairo_image_reset_static_data ();
 
-    _cairo_image_compositor_reset_static_data ();
+#if CAIRO_HAS_DRM_SURFACE
+    _cairo_drm_device_reset_static_data ();
+#endif
 
-    _cairo_default_context_reset_static_data ();
+    _cairo_reset_static_data ();
 
     CAIRO_MUTEX_FINALIZE ();
 }
@@ -119,15 +118,8 @@ _cairo_debug_check_image_surface_is_defined (const cairo_surface_t *surface)
 	width = image->width*2;
 	break;
     case CAIRO_FORMAT_RGB24:
-    case CAIRO_FORMAT_RGB30:
     case CAIRO_FORMAT_ARGB32:
 	width = image->width*4;
-	break;
-    case CAIRO_FORMAT_RGB96F:
-	width = image->width*12;
-	break;
-    case CAIRO_FORMAT_RGBA128F:
-	width = image->width*16;
 	break;
     case CAIRO_FORMAT_INVALID:
     default:
@@ -237,19 +229,18 @@ _print_close (void *closure)
 }
 
 void
-_cairo_debug_print_path (FILE *stream, const cairo_path_fixed_t *path)
+_cairo_debug_print_path (FILE *stream, cairo_path_fixed_t *path)
 {
     cairo_status_t status;
-    cairo_box_t box;
 
-    fprintf (stream,
-	     "path: extents=(%f, %f), (%f, %f)\n",
+    printf ("path: extents=(%f, %f), (%f, %f)\n",
 	    _cairo_fixed_to_double (path->extents.p1.x),
 	    _cairo_fixed_to_double (path->extents.p1.y),
 	    _cairo_fixed_to_double (path->extents.p2.x),
 	    _cairo_fixed_to_double (path->extents.p2.y));
 
     status = _cairo_path_fixed_interpret (path,
+					  CAIRO_DIRECTION_FORWARD,
 					  _print_move_to,
 					  _print_line_to,
 					  _print_curve_to,
@@ -257,164 +248,5 @@ _cairo_debug_print_path (FILE *stream, const cairo_path_fixed_t *path)
 					  stream);
     assert (status == CAIRO_STATUS_SUCCESS);
 
-    if (_cairo_path_fixed_is_box (path, &box)) {
-	fprintf (stream, "[box (%d, %d), (%d, %d)]",
-		 box.p1.x, box.p1.y, box.p2.x, box.p2.y);
-    }
-
-    fprintf (stream, "\n");
-}
-
-void
-_cairo_debug_print_polygon (FILE *stream, cairo_polygon_t *polygon)
-{
-    int n;
-
-    fprintf (stream,
-	     "polygon: extents=(%f, %f), (%f, %f)\n",
-	    _cairo_fixed_to_double (polygon->extents.p1.x),
-	    _cairo_fixed_to_double (polygon->extents.p1.y),
-	    _cairo_fixed_to_double (polygon->extents.p2.x),
-	    _cairo_fixed_to_double (polygon->extents.p2.y));
-    if (polygon->num_limits) {
-	fprintf (stream,
-		 "       : limit=(%f, %f), (%f, %f) x %d\n",
-		 _cairo_fixed_to_double (polygon->limit.p1.x),
-		 _cairo_fixed_to_double (polygon->limit.p1.y),
-		 _cairo_fixed_to_double (polygon->limit.p2.x),
-		 _cairo_fixed_to_double (polygon->limit.p2.y),
-		 polygon->num_limits);
-    }
-
-    for (n = 0; n < polygon->num_edges; n++) {
-	cairo_edge_t *edge = &polygon->edges[n];
-
-	fprintf (stream,
-		 "  [%d] = [(%f, %f), (%f, %f)], top=%f, bottom=%f, dir=%d\n",
-		 n,
-		 _cairo_fixed_to_double (edge->line.p1.x),
-		 _cairo_fixed_to_double (edge->line.p1.y),
-		 _cairo_fixed_to_double (edge->line.p2.x),
-		 _cairo_fixed_to_double (edge->line.p2.y),
-		 _cairo_fixed_to_double (edge->top),
-		 _cairo_fixed_to_double (edge->bottom),
-		 edge->dir);
-
-    }
-}
-
-void
-_cairo_debug_print_matrix (FILE *file, const cairo_matrix_t *matrix)
-{
-    fprintf (file, "[%g %g %g %g %g %g]\n",
-	     matrix->xx, matrix->yx,
-	     matrix->xy, matrix->yy,
-	     matrix->x0, matrix->y0);
-}
-
-void
-_cairo_debug_print_rect (FILE *file, const cairo_rectangle_int_t *rect)
-{
-    fprintf (file, "x: %d y: %d width: %d height: %d\n",
-	     rect->x, rect->y,
-	     rect->width, rect->height);
-}
-
-const char *
-_cairo_debug_operator_to_string (cairo_operator_t op)
-{
-    switch (op) {
-        case CAIRO_OPERATOR_CLEAR: return "CLEAR";
-        case CAIRO_OPERATOR_SOURCE: return "SOURCE";
-        case CAIRO_OPERATOR_OVER: return "OVER";
-        case CAIRO_OPERATOR_IN: return "IN";
-        case CAIRO_OPERATOR_OUT: return "OUT";
-        case CAIRO_OPERATOR_ATOP: return "ATOP";
-        case CAIRO_OPERATOR_DEST: return "DEST";
-        case CAIRO_OPERATOR_DEST_OVER: return "DEST_OVER";
-        case CAIRO_OPERATOR_DEST_IN: return "DEST_IN";
-        case CAIRO_OPERATOR_DEST_OUT: return "DEST_OUT";
-        case CAIRO_OPERATOR_DEST_ATOP: return "DEST_ATOP";
-        case CAIRO_OPERATOR_XOR: return "XOR";
-        case CAIRO_OPERATOR_ADD: return "ADD";
-        case CAIRO_OPERATOR_SATURATE: return "SATURATE";
-        case CAIRO_OPERATOR_MULTIPLY: return "MULTIPLY";
-        case CAIRO_OPERATOR_SCREEN: return "SCREEN";
-        case CAIRO_OPERATOR_OVERLAY: return "OVERLAY";
-        case CAIRO_OPERATOR_DARKEN: return "DARKEN";
-        case CAIRO_OPERATOR_LIGHTEN: return "LIGHTEN";
-        case CAIRO_OPERATOR_COLOR_DODGE: return "COLOR_DODGE";
-        case CAIRO_OPERATOR_COLOR_BURN: return "COLOR_BURN";
-        case CAIRO_OPERATOR_HARD_LIGHT: return "HARD_LIGHT";
-        case CAIRO_OPERATOR_SOFT_LIGHT: return "SOFT_LIGHT";
-        case CAIRO_OPERATOR_DIFFERENCE: return "DIFFERENCE";
-        case CAIRO_OPERATOR_EXCLUSION: return "EXCLUSION";
-        case CAIRO_OPERATOR_HSL_HUE: return "HSL_HUE";
-        case CAIRO_OPERATOR_HSL_SATURATION: return "HSL_SATURATION";
-        case CAIRO_OPERATOR_HSL_COLOR: return "HSL_COLOR";
-        case CAIRO_OPERATOR_HSL_LUMINOSITY: return "HSL_LUMINOSITY";
-    }
-    return "UNKNOWN";
-}
-
-const char *
-_cairo_debug_status_to_string (cairo_int_status_t status)
-{
-    switch (status) {
-	case CAIRO_INT_STATUS_SUCCESS: return "SUCCESS";
-	case CAIRO_INT_STATUS_NO_MEMORY: return "NO_MEMORY";
-	case CAIRO_INT_STATUS_INVALID_RESTORE: return "INVALID_RESTORE";
-	case CAIRO_INT_STATUS_INVALID_POP_GROUP: return "INVALID_POP_GROUP";
-	case CAIRO_INT_STATUS_NO_CURRENT_POINT: return "NO_CURRENT_POINT";
-	case CAIRO_INT_STATUS_INVALID_MATRIX: return "INVALID_MATRIX";
-	case CAIRO_INT_STATUS_INVALID_STATUS: return "INVALID_STATUS";
-	case CAIRO_INT_STATUS_NULL_POINTER: return "NULL_POINTER";
-	case CAIRO_INT_STATUS_INVALID_STRING: return "INVALID_STRING";
-	case CAIRO_INT_STATUS_INVALID_PATH_DATA: return "INVALID_PATH_DATA";
-	case CAIRO_INT_STATUS_READ_ERROR: return "READ_ERROR";
-	case CAIRO_INT_STATUS_WRITE_ERROR: return "WRITE_ERROR";
-	case CAIRO_INT_STATUS_SURFACE_FINISHED: return "SURFACE_FINISHED";
-	case CAIRO_INT_STATUS_SURFACE_TYPE_MISMATCH: return "SURFACE_TYPE_MISMATCH";
-	case CAIRO_INT_STATUS_PATTERN_TYPE_MISMATCH: return "PATTERN_TYPE_MISMATCH";
-	case CAIRO_INT_STATUS_INVALID_CONTENT: return "INVALID_CONTENT";
-	case CAIRO_INT_STATUS_INVALID_FORMAT: return "INVALID_FORMAT";
-	case CAIRO_INT_STATUS_INVALID_VISUAL: return "INVALID_VISUAL";
-	case CAIRO_INT_STATUS_FILE_NOT_FOUND: return "FILE_NOT_FOUND";
-	case CAIRO_INT_STATUS_INVALID_DASH: return "INVALID_DASH";
-	case CAIRO_INT_STATUS_INVALID_DSC_COMMENT: return "INVALID_DSC_COMMENT";
-	case CAIRO_INT_STATUS_INVALID_INDEX: return "INVALID_INDEX";
-	case CAIRO_INT_STATUS_CLIP_NOT_REPRESENTABLE: return "CLIP_NOT_REPRESENTABLE";
-	case CAIRO_INT_STATUS_TEMP_FILE_ERROR: return "TEMP_FILE_ERROR";
-	case CAIRO_INT_STATUS_INVALID_STRIDE: return "INVALID_STRIDE";
-	case CAIRO_INT_STATUS_FONT_TYPE_MISMATCH: return "FONT_TYPE_MISMATCH";
-	case CAIRO_INT_STATUS_USER_FONT_IMMUTABLE: return "USER_FONT_IMMUTABLE";
-	case CAIRO_INT_STATUS_USER_FONT_ERROR: return "USER_FONT_ERROR";
-	case CAIRO_INT_STATUS_NEGATIVE_COUNT: return "NEGATIVE_COUNT";
-	case CAIRO_INT_STATUS_INVALID_CLUSTERS: return "INVALID_CLUSTERS";
-	case CAIRO_INT_STATUS_INVALID_SLANT: return "INVALID_SLANT";
-	case CAIRO_INT_STATUS_INVALID_WEIGHT: return "INVALID_WEIGHT";
-	case CAIRO_INT_STATUS_INVALID_SIZE: return "INVALID_SIZE";
-	case CAIRO_INT_STATUS_USER_FONT_NOT_IMPLEMENTED: return "USER_FONT_NOT_IMPLEMENTED";
-	case CAIRO_INT_STATUS_DEVICE_TYPE_MISMATCH: return "DEVICE_TYPE_MISMATCH";
-	case CAIRO_INT_STATUS_DEVICE_ERROR: return "DEVICE_ERROR";
-	case CAIRO_INT_STATUS_INVALID_MESH_CONSTRUCTION: return "INVALID_MESH_CONSTRUCTION";
-	case CAIRO_INT_STATUS_DEVICE_FINISHED: return "DEVICE_FINISHED";
-	case CAIRO_INT_STATUS_JBIG2_GLOBAL_MISSING: return "JBIG2_GLOBAL_MISSING";
-	case CAIRO_INT_STATUS_PNG_ERROR: return "PNG_ERROR";
-	case CAIRO_INT_STATUS_FREETYPE_ERROR: return "FREETYPE_ERROR";
-	case CAIRO_INT_STATUS_WIN32_GDI_ERROR: return "WIN32_GDI_ERROR";
-	case CAIRO_INT_STATUS_TAG_ERROR: return "TAG_ERROR";
-	case CAIRO_INT_STATUS_DWRITE_ERROR: return "DWRITE_ERROR";
-	case CAIRO_INT_STATUS_SVG_FONT_ERROR: return "SVG_FONT_ERROR";
-
-	case CAIRO_INT_STATUS_LAST_STATUS: return "LAST_STATUS";
-
-	case CAIRO_INT_STATUS_UNSUPPORTED: return "UNSUPPORTED";
-	case CAIRO_INT_STATUS_DEGENERATE: return "DEGENERATE";
-	case CAIRO_INT_STATUS_NOTHING_TO_DO: return "NOTHING_TO_DO";
-	case CAIRO_INT_STATUS_FLATTEN_TRANSPARENCY: return "FLATTEN_TRANSPARENCY";
-	case CAIRO_INT_STATUS_IMAGE_FALLBACK: return "IMAGE_FALLBACK";
-	case CAIRO_INT_STATUS_ANALYZE_RECORDING_SURFACE_PATTERN: return "ANALYZE_RECORDING_SURFACE_PATTERN";
-    }
-    return "UNKNOWN";
+    printf ("\n");
 }

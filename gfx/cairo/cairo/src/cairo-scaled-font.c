@@ -39,13 +39,14 @@
  */
 
 #include "cairoint.h"
-#include "cairo-array-private.h"
 #include "cairo-error-private.h"
-#include "cairo-image-surface-private.h"
-#include "cairo-list-inline.h"
-#include "cairo-pattern-private.h"
 #include "cairo-scaled-font-private.h"
-#include "cairo-surface-backend-private.h"
+
+#if _XOPEN_SOURCE >= 600 || defined (_ISOC99_SOURCE)
+#define ISFINITE(x) isfinite (x)
+#else
+#define ISFINITE(x) ((x) * (x) >= 0.) /* check for NaNs */
+#endif
 
 /**
  * SECTION:cairo-scaled-font
@@ -55,10 +56,7 @@
  *
  * #cairo_scaled_font_t represents a realization of a font face at a particular
  * size and transformation and a certain set of font options.
- **/
-
-static uintptr_t
-_cairo_scaled_font_compute_hash (cairo_scaled_font_t *scaled_font);
+ */
 
 /* Global Glyph Cache
  *
@@ -74,13 +72,13 @@ _cairo_scaled_font_compute_hash (cairo_scaled_font_t *scaled_font);
  */
 
 /* XXX: This number is arbitrary---we've never done any measurement of this. */
-#define MAX_GLYPH_PAGES_CACHED 512
+#define MAX_GLYPH_PAGES_CACHED 256
 static cairo_cache_t cairo_scaled_glyph_page_cache;
 
 #define CAIRO_SCALED_GLYPH_PAGE_SIZE 32
 struct _cairo_scaled_glyph_page {
     cairo_cache_entry_t cache_entry;
-    cairo_scaled_font_t *scaled_font;
+
     cairo_list_t link;
 
     unsigned int num_glyphs;
@@ -199,15 +197,10 @@ static void
 _cairo_scaled_glyph_fini (cairo_scaled_font_t *scaled_font,
 			  cairo_scaled_glyph_t *scaled_glyph)
 {
-    while (! cairo_list_is_empty (&scaled_glyph->dev_privates)) {
-	cairo_scaled_glyph_private_t *private =
-	    cairo_list_first_entry (&scaled_glyph->dev_privates,
-				    cairo_scaled_glyph_private_t,
-				    link);
-	private->destroy (private, scaled_glyph, scaled_font);
-    }
+    const cairo_surface_backend_t *surface_backend = scaled_font->surface_backend;
 
-    _cairo_image_scaled_glyph_fini (scaled_font, scaled_glyph);
+    if (surface_backend != NULL && surface_backend->scaled_glyph_fini != NULL)
+	surface_backend->scaled_glyph_fini (scaled_glyph, scaled_font);
 
     if (scaled_glyph->surface != NULL)
 	cairo_surface_destroy (&scaled_glyph->surface->base);
@@ -216,21 +209,9 @@ _cairo_scaled_glyph_fini (cairo_scaled_font_t *scaled_font,
 	_cairo_path_fixed_destroy (scaled_glyph->path);
 
     if (scaled_glyph->recording_surface != NULL) {
-	cairo_status_t status;
-
-	/* If the recording surface contains other fonts, destroying
-	 * it while holding _cairo_scaled_glyph_page_cache_mutex will
-	 * result in deadlock when the recording surface font is
-	 * destroyed. Instead, move the recording surface to a list of
-	 * surfaces to free and free it in
-	 * _cairo_scaled_font_thaw_cache() after
-	 * _cairo_scaled_glyph_page_cache_mutex is unlocked. */
-	status = _cairo_array_append (&scaled_font->recording_surfaces_to_free, &scaled_glyph->recording_surface);
-	assert (status == CAIRO_STATUS_SUCCESS);
+	cairo_surface_finish (scaled_glyph->recording_surface);
+	cairo_surface_destroy (scaled_glyph->recording_surface);
     }
-
-    if (scaled_glyph->color_surface != NULL)
-	cairo_surface_destroy (&scaled_glyph->color_surface->base);
 }
 
 #define ZOMBIE 0
@@ -260,8 +241,8 @@ static const cairo_scaled_font_t _cairo_scaled_font_nil = {
     { NULL, NULL },		/* pages */
     FALSE,			/* cache_frozen */
     FALSE,			/* global_cache_frozen */
-    { 0, 0, sizeof(cairo_surface_t*), NULL }, /* recording_surfaces_to_free */
-    { NULL, NULL },		/* privates */
+    NULL,			/* surface_backend */
+    NULL,			/* surface_private */
     NULL			/* backend */
 };
 
@@ -328,14 +309,13 @@ cairo_scaled_font_get_type (cairo_scaled_font_t *scaled_font)
  *
  * Return value: %CAIRO_STATUS_SUCCESS or another error such as
  *   %CAIRO_STATUS_NO_MEMORY.
- *
- * Since: 1.0
  **/
 cairo_status_t
 cairo_scaled_font_status (cairo_scaled_font_t *scaled_font)
 {
     return scaled_font->status;
 }
+slim_hidden_def (cairo_scaled_font_status);
 
 /* Here we keep a unique mapping from
  * font_face/matrix/ctm/font_options => #cairo_scaled_font_t.
@@ -378,7 +358,7 @@ _cairo_scaled_font_map_lock (void)
     CAIRO_MUTEX_LOCK (_cairo_scaled_font_map_mutex);
 
     if (cairo_scaled_font_map == NULL) {
-	cairo_scaled_font_map = _cairo_malloc (sizeof (cairo_scaled_font_map_t));
+	cairo_scaled_font_map = malloc (sizeof (cairo_scaled_font_map_t));
 	if (unlikely (cairo_scaled_font_map == NULL))
 	    goto CLEANUP_MUTEX_LOCK;
 
@@ -456,16 +436,14 @@ _cairo_scaled_font_map_destroy (void)
  CLEANUP_MUTEX_LOCK:
     CAIRO_MUTEX_UNLOCK (_cairo_scaled_font_map_mutex);
 }
-
 static void
-_cairo_scaled_glyph_page_destroy (cairo_scaled_font_t *scaled_font,
-				  cairo_scaled_glyph_page_t *page)
+_cairo_scaled_glyph_page_destroy (void *closure)
 {
+    cairo_scaled_glyph_page_t *page = closure;
+    cairo_scaled_font_t *scaled_font;
     unsigned int n;
 
-    assert (!scaled_font->cache_frozen);
-    assert (!scaled_font->global_cache_frozen);
-
+    scaled_font = (cairo_scaled_font_t *) page->cache_entry.hash;
     for (n = 0; n < page->num_glyphs; n++) {
 	_cairo_hash_table_remove (scaled_font->glyphs,
 				  &page->glyphs[n].hash_entry);
@@ -473,22 +451,8 @@ _cairo_scaled_glyph_page_destroy (cairo_scaled_font_t *scaled_font,
     }
 
     cairo_list_del (&page->link);
+
     free (page);
-}
-
-static void
-_cairo_scaled_glyph_page_pluck (void *closure)
-{
-    cairo_scaled_glyph_page_t *page = closure;
-    cairo_scaled_font_t *scaled_font;
-
-    assert (! cairo_list_is_empty (&page->link));
-
-    scaled_font = page->scaled_font;
-
-    /* The font is locked in _cairo_scaled_glyph_page_can_remove () */
-    _cairo_scaled_glyph_page_destroy (scaled_font, page);
-    CAIRO_MUTEX_UNLOCK (scaled_font->mutex);
 }
 
 /* If a scaled font wants to unlock the font map while still being
@@ -519,7 +483,7 @@ _cairo_scaled_font_register_placeholder_and_unlock_font_map (cairo_scaled_font_t
     if (unlikely (status))
 	return status;
 
-    placeholder_scaled_font = _cairo_malloc (sizeof (cairo_scaled_font_t));
+    placeholder_scaled_font = malloc (sizeof (cairo_scaled_font_t));
     if (unlikely (placeholder_scaled_font == NULL))
 	return _cairo_error (CAIRO_STATUS_NO_MEMORY);
 
@@ -535,8 +499,6 @@ _cairo_scaled_font_register_placeholder_and_unlock_font_map (cairo_scaled_font_t
 
     placeholder_scaled_font->placeholder = TRUE;
 
-    placeholder_scaled_font->hash_entry.hash
-	= _cairo_scaled_font_compute_hash (placeholder_scaled_font);
     status = _cairo_hash_table_insert (cairo_scaled_font_map->hash_table,
 				       &placeholder_scaled_font->hash_entry);
     if (unlikely (status))
@@ -562,9 +524,6 @@ _cairo_scaled_font_unregister_placeholder_and_lock_font_map (cairo_scaled_font_t
 
     CAIRO_MUTEX_LOCK (_cairo_scaled_font_map_mutex);
 
-    /* temporary hash value to match the placeholder */
-    scaled_font->hash_entry.hash
-	= _cairo_scaled_font_compute_hash (scaled_font);
     placeholder_scaled_font =
 	_cairo_hash_table_lookup (cairo_scaled_font_map->hash_table,
 				  &scaled_font->hash_entry);
@@ -608,51 +567,31 @@ _cairo_scaled_font_placeholder_wait_for_creation_to_finish (cairo_scaled_font_t 
  * well tested with binary data.
  */
 
-#define FNV_64_PRIME ((uint64_t)0x00000100000001B3)
-#define FNV1_64_INIT ((uint64_t)0xcbf29ce484222325)
+#define FNV_32_PRIME ((uint32_t)0x01000193)
+#define FNV1_32_INIT ((uint32_t)0x811c9dc5)
 
-static uint64_t
+static uint32_t
 _hash_matrix_fnv (const cairo_matrix_t	*matrix,
-		  uint64_t		 hval)
+		  uint32_t		 hval)
 {
     const uint8_t *buffer = (const uint8_t *) matrix;
     int len = sizeof (cairo_matrix_t);
     do {
-	hval *= FNV_64_PRIME;
+	hval *= FNV_32_PRIME;
 	hval ^= *buffer++;
     } while (--len);
 
     return hval;
 }
 
-static uint64_t
-_hash_mix_bits (uint64_t hash)
+static uint32_t
+_hash_mix_bits (uint32_t hash)
 {
     hash += hash << 12;
     hash ^= hash >> 7;
     hash += hash << 3;
     hash ^= hash >> 17;
     hash += hash << 5;
-    return hash;
-}
-
-static uintptr_t
-_cairo_scaled_font_compute_hash (cairo_scaled_font_t *scaled_font)
-{
-    uint64_t hash = FNV1_64_INIT;
-
-    /* We do a bytewise hash on the font matrices */
-    hash = _hash_matrix_fnv (&scaled_font->font_matrix, hash);
-    hash = _hash_matrix_fnv (&scaled_font->ctm, hash);
-    hash = _hash_mix_bits (hash);
-
-    hash ^= (uintptr_t) scaled_font->original_font_face;
-    hash ^= cairo_font_options_hash (&scaled_font->options);
-
-    /* final mixing of bits */
-    hash = _hash_mix_bits (hash);
-    assert (hash != ZOMBIE);
-
     return hash;
 }
 
@@ -663,10 +602,11 @@ _cairo_scaled_font_init_key (cairo_scaled_font_t        *scaled_font,
 			     const cairo_matrix_t       *ctm,
 			     const cairo_font_options_t *options)
 {
+    uint32_t hash = FNV1_32_INIT;
+
     scaled_font->status = CAIRO_STATUS_SUCCESS;
     scaled_font->placeholder = FALSE;
     scaled_font->font_face = font_face;
-    scaled_font->original_font_face = font_face;
     scaled_font->font_matrix = *font_matrix;
     scaled_font->ctm = *ctm;
     /* ignore translation values in the ctm */
@@ -674,14 +614,19 @@ _cairo_scaled_font_init_key (cairo_scaled_font_t        *scaled_font,
     scaled_font->ctm.y0 = 0.;
     _cairo_font_options_init_copy (&scaled_font->options, options);
 
-    scaled_font->hash_entry.hash =
-	_cairo_scaled_font_compute_hash (scaled_font);
-}
+    /* We do a bytewise hash on the font matrices */
+    hash = _hash_matrix_fnv (&scaled_font->font_matrix, hash);
+    hash = _hash_matrix_fnv (&scaled_font->ctm, hash);
+    hash = _hash_mix_bits (hash);
 
-static void
-_cairo_scaled_font_fini_key (cairo_scaled_font_t *scaled_font)
-{
-    _cairo_font_options_fini (&scaled_font->options);
+    hash ^= (uintptr_t) scaled_font->font_face;
+    hash ^= cairo_font_options_hash (&scaled_font->options);
+
+    /* final mixing of bits */
+    hash = _hash_mix_bits (hash);
+
+    assert (hash != ZOMBIE);
+    scaled_font->hash_entry.hash = hash;
 }
 
 static cairo_bool_t
@@ -691,7 +636,10 @@ _cairo_scaled_font_keys_equal (const void *abstract_key_a,
     const cairo_scaled_font_t *key_a = abstract_key_a;
     const cairo_scaled_font_t *key_b = abstract_key_b;
 
-    return key_a->original_font_face == key_b->original_font_face &&
+    if (key_a->hash_entry.hash != key_b->hash_entry.hash)
+	return FALSE;
+
+    return key_a->font_face == key_b->font_face &&
 	    memcmp ((unsigned char *)(&key_a->font_matrix.xx),
 		    (unsigned char *)(&key_b->font_matrix.xx),
 		    sizeof(cairo_matrix_t)) == 0 &&
@@ -718,6 +666,15 @@ _cairo_scaled_font_matches (const cairo_scaled_font_t *scaled_font,
 	    cairo_font_options_equal (&scaled_font->options, options);
 }
 
+static cairo_bool_t
+_cairo_scaled_glyphs_equal (const void *abstract_a, const void *abstract_b)
+{
+    const cairo_scaled_glyph_t *a = abstract_a;
+    const cairo_scaled_glyph_t *b = abstract_b;
+
+    return a->hash_entry.hash == b->hash_entry.hash;
+}
+
 /*
  * Basic #cairo_scaled_font_t object management
  */
@@ -736,16 +693,8 @@ _cairo_scaled_font_init (cairo_scaled_font_t               *scaled_font,
     if (unlikely (status))
 	return status;
 
-    scaled_font->status = CAIRO_STATUS_SUCCESS;
-    scaled_font->placeholder = FALSE;
-    scaled_font->font_face = font_face;
-    scaled_font->original_font_face = font_face;
-    scaled_font->font_matrix = *font_matrix;
-    scaled_font->ctm = *ctm;
-    /* ignore translation values in the ctm */
-    scaled_font->ctm.x0 = 0.;
-    scaled_font->ctm.y0 = 0.;
-    _cairo_font_options_init_copy (&scaled_font->options, options);
+    _cairo_scaled_font_init_key (scaled_font, font_face,
+				 font_matrix, ctm, options);
 
     cairo_matrix_multiply (&scaled_font->scale,
 			   &scaled_font->font_matrix,
@@ -774,14 +723,13 @@ _cairo_scaled_font_init (cairo_scaled_font_t               *scaled_font,
 	    return status;
     }
 
-    scaled_font->glyphs = _cairo_hash_table_create (NULL);
+    scaled_font->glyphs = _cairo_hash_table_create (_cairo_scaled_glyphs_equal);
     if (unlikely (scaled_font->glyphs == NULL))
 	return _cairo_error (CAIRO_STATUS_NO_MEMORY);
 
     cairo_list_init (&scaled_font->glyph_pages);
     scaled_font->cache_frozen = FALSE;
     scaled_font->global_cache_frozen = FALSE;
-    _cairo_array_init (&scaled_font->recording_surfaces_to_free, sizeof (cairo_surface_t *));
 
     scaled_font->holdover = FALSE;
     scaled_font->finished = FALSE;
@@ -793,30 +741,15 @@ _cairo_scaled_font_init (cairo_scaled_font_t               *scaled_font,
     cairo_font_face_reference (font_face);
     scaled_font->original_font_face = NULL;
 
-    CAIRO_RECURSIVE_MUTEX_INIT (scaled_font->mutex);
+    CAIRO_MUTEX_INIT (scaled_font->mutex);
 
-    cairo_list_init (&scaled_font->dev_privates);
+    scaled_font->surface_backend = NULL;
+    scaled_font->surface_private = NULL;
 
     scaled_font->backend = backend;
     cairo_list_init (&scaled_font->link);
 
     return CAIRO_STATUS_SUCCESS;
-}
-
-static void _cairo_scaled_font_free_recording_surfaces (cairo_scaled_font_t *scaled_font)
-{
-    int num_recording_surfaces;
-    cairo_surface_t *surface;
-
-    num_recording_surfaces = _cairo_array_num_elements (&scaled_font->recording_surfaces_to_free);
-    if (num_recording_surfaces > 0) {
-	for (int i = 0; i < num_recording_surfaces; i++) {
-	    _cairo_array_copy_element (&scaled_font->recording_surfaces_to_free, i, &surface);
-	    cairo_surface_finish (surface);
-	    cairo_surface_destroy (surface);
-	}
-	_cairo_array_truncate (&scaled_font->recording_surfaces_to_free, 0);
-    }
 }
 
 void
@@ -832,54 +765,32 @@ _cairo_scaled_font_freeze_cache (cairo_scaled_font_t *scaled_font)
 void
 _cairo_scaled_font_thaw_cache (cairo_scaled_font_t *scaled_font)
 {
-    assert (scaled_font->cache_frozen);
+    scaled_font->cache_frozen = FALSE;
 
     if (scaled_font->global_cache_frozen) {
 	CAIRO_MUTEX_LOCK (_cairo_scaled_glyph_page_cache_mutex);
 	_cairo_cache_thaw (&cairo_scaled_glyph_page_cache);
 	CAIRO_MUTEX_UNLOCK (_cairo_scaled_glyph_page_cache_mutex);
+
 	scaled_font->global_cache_frozen = FALSE;
     }
 
-    _cairo_scaled_font_free_recording_surfaces (scaled_font);
-
-    scaled_font->cache_frozen = FALSE;
     CAIRO_MUTEX_UNLOCK (scaled_font->mutex);
 }
 
 void
 _cairo_scaled_font_reset_cache (cairo_scaled_font_t *scaled_font)
 {
-    cairo_scaled_glyph_page_t *page;
-
-    CAIRO_MUTEX_LOCK (scaled_font->mutex);
     assert (! scaled_font->cache_frozen);
-    assert (! scaled_font->global_cache_frozen);
+
     CAIRO_MUTEX_LOCK (_cairo_scaled_glyph_page_cache_mutex);
-
-    cairo_list_foreach_entry (page,
-			      cairo_scaled_glyph_page_t,
-			      &scaled_font->glyph_pages,
-			      link) {
-	cairo_scaled_glyph_page_cache.size -= page->cache_entry.size;
-	_cairo_hash_table_remove (cairo_scaled_glyph_page_cache.hash_table,
-				  (cairo_hash_entry_t *) &page->cache_entry);
-    }
-
-    CAIRO_MUTEX_UNLOCK (_cairo_scaled_glyph_page_cache_mutex);
-
-    /* Destroy scaled_font's pages while holding its lock only, and not the
-     * global page cache lock. The destructor can cause us to recurse and
-     * end up back here for a different scaled_font. */
-
     while (! cairo_list_is_empty (&scaled_font->glyph_pages)) {
-	page = cairo_list_first_entry (&scaled_font->glyph_pages,
-				       cairo_scaled_glyph_page_t,
-				       link);
-	_cairo_scaled_glyph_page_destroy (scaled_font, page);
+	_cairo_cache_remove (&cairo_scaled_glyph_page_cache,
+                             &cairo_list_first_entry (&scaled_font->glyph_pages,
+                                                      cairo_scaled_glyph_page_t,
+                                                      link)->cache_entry);
     }
-
-    CAIRO_MUTEX_UNLOCK (scaled_font->mutex);
+    CAIRO_MUTEX_UNLOCK (_cairo_scaled_glyph_page_cache_mutex);
 }
 
 cairo_status_t
@@ -914,34 +825,40 @@ _cairo_scaled_font_set_metrics (cairo_scaled_font_t	    *scaled_font,
 static void
 _cairo_scaled_font_fini_internal (cairo_scaled_font_t *scaled_font)
 {
-    assert (! scaled_font->cache_frozen);
-    assert (! scaled_font->global_cache_frozen);
     scaled_font->finished = TRUE;
 
     _cairo_scaled_font_reset_cache (scaled_font);
     _cairo_hash_table_destroy (scaled_font->glyphs);
-    _cairo_font_options_fini (&scaled_font->options);
 
     cairo_font_face_destroy (scaled_font->font_face);
     cairo_font_face_destroy (scaled_font->original_font_face);
 
-    _cairo_scaled_font_free_recording_surfaces (scaled_font);
-    _cairo_array_fini (&scaled_font->recording_surfaces_to_free);
-
     CAIRO_MUTEX_FINI (scaled_font->mutex);
 
-    while (! cairo_list_is_empty (&scaled_font->dev_privates)) {
-	cairo_scaled_font_private_t *private =
-	    cairo_list_first_entry (&scaled_font->dev_privates,
-				    cairo_scaled_font_private_t,
-				    link);
-	private->destroy (private, scaled_font);
-    }
+    if (scaled_font->surface_backend != NULL &&
+	scaled_font->surface_backend->scaled_font_fini != NULL)
+	scaled_font->surface_backend->scaled_font_fini (scaled_font);
 
     if (scaled_font->backend != NULL && scaled_font->backend->fini != NULL)
 	scaled_font->backend->fini (scaled_font);
 
     _cairo_user_data_array_fini (&scaled_font->user_data);
+}
+
+/* XXX: allow multiple backends to share the font */
+void
+_cairo_scaled_font_revoke_ownership (cairo_scaled_font_t *scaled_font)
+{
+    if (scaled_font->surface_backend == NULL)
+	return;
+
+    _cairo_scaled_font_reset_cache (scaled_font);
+
+    if (scaled_font->surface_backend->scaled_font_fini != NULL)
+	scaled_font->surface_backend->scaled_font_fini (scaled_font);
+
+    scaled_font->surface_backend = NULL;
+    scaled_font->surface_private = NULL;
 }
 
 void
@@ -952,69 +869,6 @@ _cairo_scaled_font_fini (cairo_scaled_font_t *scaled_font)
     CAIRO_MUTEX_UNLOCK (_cairo_scaled_font_map_mutex);
     _cairo_scaled_font_fini_internal (scaled_font);
     CAIRO_MUTEX_LOCK (_cairo_scaled_font_map_mutex);
-}
-
-void
-_cairo_scaled_font_attach_private (cairo_scaled_font_t *scaled_font,
-				   cairo_scaled_font_private_t *private,
-				   const void *key,
-				   void (*destroy) (cairo_scaled_font_private_t *,
-						    cairo_scaled_font_t *))
-{
-    private->key = key;
-    private->destroy = destroy;
-    cairo_list_add (&private->link, &scaled_font->dev_privates);
-}
-
-cairo_scaled_font_private_t *
-_cairo_scaled_font_find_private (cairo_scaled_font_t *scaled_font,
-				 const void *key)
-{
-    cairo_scaled_font_private_t *priv;
-
-    cairo_list_foreach_entry (priv, cairo_scaled_font_private_t,
-			      &scaled_font->dev_privates, link)
-    {
-	if (priv->key == key) {
-	    if (priv->link.prev != &scaled_font->dev_privates)
-		cairo_list_move (&priv->link, &scaled_font->dev_privates);
-	    return priv;
-	}
-    }
-
-    return NULL;
-}
-
-void
-_cairo_scaled_glyph_attach_private (cairo_scaled_glyph_t *scaled_glyph,
-				   cairo_scaled_glyph_private_t *private,
-				   const void *key,
-				   void (*destroy) (cairo_scaled_glyph_private_t *,
-						    cairo_scaled_glyph_t *,
-						    cairo_scaled_font_t *))
-{
-    private->key = key;
-    private->destroy = destroy;
-    cairo_list_add (&private->link, &scaled_glyph->dev_privates);
-}
-
-cairo_scaled_glyph_private_t *
-_cairo_scaled_glyph_find_private (cairo_scaled_glyph_t *scaled_glyph,
-				 const void *key)
-{
-    cairo_scaled_glyph_private_t *priv;
-
-    cairo_list_foreach_entry (priv, cairo_scaled_glyph_private_t,
-			      &scaled_glyph->dev_privates, link)
-    {
-	if (priv->key == key) {
-	    if (priv->link.prev != &scaled_glyph->dev_privates)
-		cairo_list_move (&priv->link, &scaled_glyph->dev_privates);
-	    return priv;
-	}
-    }
-
-    return NULL;
 }
 
 /**
@@ -1036,8 +890,6 @@ _cairo_scaled_glyph_find_private (cairo_scaled_glyph_t *scaled_glyph,
  *
  * Return value: a newly created #cairo_scaled_font_t. Destroy with
  *  cairo_scaled_font_destroy()
- *
- * Since: 1.0
  **/
 cairo_scaled_font_t *
 cairo_scaled_font_create (cairo_font_face_t          *font_face,
@@ -1098,91 +950,109 @@ cairo_scaled_font_create (cairo_font_face_t          *font_face,
 	scaled_font->hash_entry.hash = ZOMBIE;
 	dead = scaled_font;
 	font_map->mru_scaled_font = NULL;
+
+	if (font_face->backend->get_implementation != NULL) {
+	    font_face = font_face->backend->get_implementation (font_face,
+								font_matrix,
+								ctm,
+								options);
+	    if (unlikely (font_face->status)) {
+		_cairo_scaled_font_map_unlock ();
+		cairo_scaled_font_destroy (scaled_font);
+		return _cairo_scaled_font_create_in_error (font_face->status);
+	    }
+	}
+
+	_cairo_scaled_font_init_key (&key, font_face,
+				     font_matrix, ctm, options);
     }
-
-    _cairo_scaled_font_init_key (&key, font_face, font_matrix, ctm, options);
-
-    while ((scaled_font = _cairo_hash_table_lookup (font_map->hash_table,
-						    &key.hash_entry)))
+    else
     {
-	if (! scaled_font->placeholder)
-	    break;
+	if (font_face->backend->get_implementation != NULL) {
+	    font_face = font_face->backend->get_implementation (font_face,
+								font_matrix,
+								ctm,
+								options);
+	    if (unlikely (font_face->status)) {
+		_cairo_scaled_font_map_unlock ();
+		return _cairo_scaled_font_create_in_error (font_face->status);
+	    }
+	}
 
-	/* If the scaled font is being created (happens for user-font),
-	 * just wait until it's done, then retry */
-	_cairo_scaled_font_placeholder_wait_for_creation_to_finish (scaled_font);
-    }
-    _cairo_scaled_font_fini_key (&key);
+	_cairo_scaled_font_init_key (&key, font_face,
+				     font_matrix, ctm, options);
 
-    if (scaled_font != NULL) {
-	/* If the original reference count is 0, then this font must have
-	 * been found in font_map->holdovers, (which means this caching is
-	 * actually working). So now we remove it from the holdovers
-	 * array, unless we caught the font in the middle of destruction.
-	 */
-	if (! CAIRO_REFERENCE_COUNT_HAS_REFERENCE (&scaled_font->ref_count)) {
-	    if (scaled_font->holdover) {
-		int i;
+	while ((scaled_font = _cairo_hash_table_lookup (font_map->hash_table,
+							&key.hash_entry)))
+	{
+	    if (! scaled_font->placeholder)
+		break;
 
-		for (i = 0; i < font_map->num_holdovers; i++) {
-		    if (font_map->holdovers[i] == scaled_font) {
-			font_map->num_holdovers--;
-			memmove (&font_map->holdovers[i],
-				 &font_map->holdovers[i+1],
-				 (font_map->num_holdovers - i) * sizeof (cairo_scaled_font_t*));
-			break;
+	    /* If the scaled font is being created (happens for user-font),
+	     * just wait until it's done, then retry */
+	    _cairo_scaled_font_placeholder_wait_for_creation_to_finish (scaled_font);
+	}
+
+	/* Return existing scaled_font if it exists in the hash table. */
+	if (scaled_font != NULL) {
+	    /* If the original reference count is 0, then this font must have
+	     * been found in font_map->holdovers, (which means this caching is
+	     * actually working). So now we remove it from the holdovers
+	     * array, unless we caught the font in the middle of destruction.
+	     */
+	    if (! CAIRO_REFERENCE_COUNT_HAS_REFERENCE (&scaled_font->ref_count)) {
+		if (scaled_font->holdover) {
+		    int i;
+
+		    for (i = 0; i < font_map->num_holdovers; i++) {
+			if (font_map->holdovers[i] == scaled_font) {
+			    font_map->num_holdovers--;
+			    memmove (&font_map->holdovers[i],
+				     &font_map->holdovers[i+1],
+				     (font_map->num_holdovers - i) * sizeof (cairo_scaled_font_t*));
+			    break;
+			}
 		    }
+
+		    scaled_font->holdover = FALSE;
 		}
 
-		scaled_font->holdover = FALSE;
+		/* reset any error status */
+		scaled_font->status = CAIRO_STATUS_SUCCESS;
 	    }
 
-	    /* reset any error status */
-	    scaled_font->status = CAIRO_STATUS_SUCCESS;
+	    if (likely (scaled_font->status == CAIRO_STATUS_SUCCESS)) {
+		/* We increment the reference count manually here, (rather
+		 * than calling into cairo_scaled_font_reference), since we
+		 * must modify the reference count while our lock is still
+		 * held. */
+
+		old = font_map->mru_scaled_font;
+		font_map->mru_scaled_font = scaled_font;
+		/* increment reference count for the mru cache */
+		_cairo_reference_count_inc (&scaled_font->ref_count);
+		/* and increment for the returned reference */
+		_cairo_reference_count_inc (&scaled_font->ref_count);
+		_cairo_scaled_font_map_unlock ();
+
+		cairo_scaled_font_destroy (old);
+		if (font_face != original_font_face)
+		    cairo_font_face_destroy (font_face);
+
+		return scaled_font;
+	    }
+
+	    /* the font has been put into an error status - abandon the cache */
+	    _cairo_hash_table_remove (font_map->hash_table,
+				      &scaled_font->hash_entry);
+	    scaled_font->hash_entry.hash = ZOMBIE;
 	}
-
-	if (likely (scaled_font->status == CAIRO_STATUS_SUCCESS)) {
-	    /* We increment the reference count manually here, (rather
-	     * than calling into cairo_scaled_font_reference), since we
-	     * must modify the reference count while our lock is still
-	     * held. */
-
-	    old = font_map->mru_scaled_font;
-	    font_map->mru_scaled_font = scaled_font;
-	    /* increment reference count for the mru cache */
-	    _cairo_reference_count_inc (&scaled_font->ref_count);
-	    /* and increment for the returned reference */
-	    _cairo_reference_count_inc (&scaled_font->ref_count);
-	    _cairo_scaled_font_map_unlock ();
-
-	    cairo_scaled_font_destroy (old);
-	    if (font_face != original_font_face)
-		cairo_font_face_destroy (font_face);
-
-	    return scaled_font;
-	}
-
-	/* the font has been put into an error status - abandon the cache */
-	_cairo_hash_table_remove (font_map->hash_table,
-				  &scaled_font->hash_entry);
-	scaled_font->hash_entry.hash = ZOMBIE;
     }
-
 
     /* Otherwise create it and insert it into the hash table. */
-    if (font_face->backend->get_implementation != NULL) {
-	font_face = font_face->backend->get_implementation (font_face,
-							    font_matrix,
-							    ctm,
-							    options);
-	if (unlikely (font_face->status)) {
-	    _cairo_scaled_font_map_unlock ();
-	    return _cairo_scaled_font_create_in_error (font_face->status);
-	}
-    }
-
     status = font_face->backend->scaled_font_create (font_face, font_matrix,
 						     ctm, options, &scaled_font);
+    /* Did we leave the backend in an error state? */
     if (unlikely (status)) {
 	_cairo_scaled_font_map_unlock ();
 	if (font_face != original_font_face)
@@ -1191,6 +1061,7 @@ cairo_scaled_font_create (cairo_font_face_t          *font_face,
 	if (dead != NULL)
 	    cairo_scaled_font_destroy (dead);
 
+	status = _cairo_font_face_set_error (font_face, status);
 	return _cairo_scaled_font_create_in_error (status);
     }
     /* Or did we encounter an error whilst constructing the scaled font? */
@@ -1210,13 +1081,9 @@ cairo_scaled_font_create (cairo_font_face_t          *font_face,
      * ft-font-faces
      */
     assert (scaled_font->font_face == font_face);
-    assert (! scaled_font->cache_frozen);
-    assert (! scaled_font->global_cache_frozen);
 
     scaled_font->original_font_face =
 	cairo_font_face_reference (original_font_face);
-
-    scaled_font->hash_entry.hash = _cairo_scaled_font_compute_hash(scaled_font);
 
     status = _cairo_hash_table_insert (font_map->hash_table,
 				       &scaled_font->hash_entry);
@@ -1246,6 +1113,7 @@ cairo_scaled_font_create (cairo_font_face_t          *font_face,
 
     return scaled_font;
 }
+slim_hidden_def (cairo_scaled_font_create);
 
 static cairo_scaled_font_t *_cairo_scaled_font_nil_objects[CAIRO_STATUS_LAST_STATUS + 1];
 
@@ -1263,7 +1131,7 @@ _cairo_scaled_font_create_in_error (cairo_status_t status)
     CAIRO_MUTEX_LOCK (_cairo_scaled_font_error_mutex);
     scaled_font = _cairo_scaled_font_nil_objects[status];
     if (unlikely (scaled_font == NULL)) {
-	scaled_font = _cairo_malloc (sizeof (cairo_scaled_font_t));
+	scaled_font = malloc (sizeof (cairo_scaled_font_t));
 	if (unlikely (scaled_font == NULL)) {
 	    CAIRO_MUTEX_UNLOCK (_cairo_scaled_font_error_mutex);
 	    _cairo_error_throw (CAIRO_STATUS_NO_MEMORY);
@@ -1289,8 +1157,10 @@ _cairo_scaled_font_reset_static_data (void)
 	 status <= CAIRO_STATUS_LAST_STATUS;
 	 status++)
     {
-	free (_cairo_scaled_font_nil_objects[status]);
-	_cairo_scaled_font_nil_objects[status] = NULL;
+	if (_cairo_scaled_font_nil_objects[status] != NULL) {
+	    free (_cairo_scaled_font_nil_objects[status]);
+	    _cairo_scaled_font_nil_objects[status] = NULL;
+	}
     }
     CAIRO_MUTEX_UNLOCK (_cairo_scaled_font_error_mutex);
 
@@ -1311,12 +1181,10 @@ _cairo_scaled_font_reset_static_data (void)
  * @scaled_font from being destroyed until a matching call to
  * cairo_scaled_font_destroy() is made.
  *
- * Use cairo_scaled_font_get_reference_count() to get the number of
- * references to a #cairo_scaled_font_t.
+ * The number of references to a #cairo_scaled_font_t can be get using
+ * cairo_scaled_font_get_reference_count().
  *
  * Returns: the referenced #cairo_scaled_font_t
- *
- * Since: 1.0
  **/
 cairo_scaled_font_t *
 cairo_scaled_font_reference (cairo_scaled_font_t *scaled_font)
@@ -1331,6 +1199,7 @@ cairo_scaled_font_reference (cairo_scaled_font_t *scaled_font)
 
     return scaled_font;
 }
+slim_hidden_def (cairo_scaled_font_reference);
 
 /**
  * cairo_scaled_font_destroy:
@@ -1339,8 +1208,6 @@ cairo_scaled_font_reference (cairo_scaled_font_t *scaled_font)
  * Decreases the reference count on @font by one. If the result
  * is zero, then @font and all associated resources are freed.
  * See cairo_scaled_font_reference().
- *
- * Since: 1.0
  **/
 void
 cairo_scaled_font_destroy (cairo_scaled_font_t *scaled_font)
@@ -1356,14 +1223,11 @@ cairo_scaled_font_destroy (cairo_scaled_font_t *scaled_font)
 
     assert (CAIRO_REFERENCE_COUNT_HAS_REFERENCE (&scaled_font->ref_count));
 
+    if (! _cairo_reference_count_dec_and_test (&scaled_font->ref_count))
+	return;
+
     font_map = _cairo_scaled_font_map_lock ();
     assert (font_map != NULL);
-
-    if (! _cairo_reference_count_dec_and_test (&scaled_font->ref_count))
-	goto unlock;
-
-    assert (! scaled_font->cache_frozen);
-    assert (! scaled_font->global_cache_frozen);
 
     /* Another thread may have resurrected the font whilst we waited */
     if (! CAIRO_REFERENCE_COUNT_HAS_REFERENCE (&scaled_font->ref_count)) {
@@ -1414,6 +1278,7 @@ cairo_scaled_font_destroy (cairo_scaled_font_t *scaled_font)
 	free (lru);
     }
 }
+slim_hidden_def (cairo_scaled_font_destroy);
 
 /**
  * cairo_scaled_font_get_reference_count:
@@ -1457,6 +1322,7 @@ cairo_scaled_font_get_user_data (cairo_scaled_font_t	     *scaled_font,
     return _cairo_user_data_array_get_data (&scaled_font->user_data,
 					    key);
 }
+slim_hidden_def (cairo_scaled_font_get_user_data);
 
 /**
  * cairo_scaled_font_set_user_data:
@@ -1488,6 +1354,7 @@ cairo_scaled_font_set_user_data (cairo_scaled_font_t	     *scaled_font,
     return _cairo_user_data_array_set_data (&scaled_font->user_data,
 					    key, user_data, destroy);
 }
+slim_hidden_def (cairo_scaled_font_set_user_data);
 
 /* Public font API follows. */
 
@@ -1497,8 +1364,6 @@ cairo_scaled_font_set_user_data (cairo_scaled_font_t	     *scaled_font,
  * @extents: a #cairo_font_extents_t which to store the retrieved extents.
  *
  * Gets the metrics for a #cairo_scaled_font_t.
- *
- * Since: 1.0
  **/
 void
 cairo_scaled_font_extents (cairo_scaled_font_t  *scaled_font,
@@ -1515,6 +1380,7 @@ cairo_scaled_font_extents (cairo_scaled_font_t  *scaled_font,
 
     *extents = scaled_font->extents;
 }
+slim_hidden_def (cairo_scaled_font_extents);
 
 /**
  * cairo_scaled_font_text_extents:
@@ -1595,8 +1461,6 @@ ZERO_EXTENTS:
  *
  * Note that whitespace glyphs do not contribute to the size of the
  * rectangle (extents.width and extents.height).
- *
- * Since: 1.0
  **/
 void
 cairo_scaled_font_glyph_extents (cairo_scaled_font_t   *scaled_font,
@@ -1643,10 +1507,11 @@ cairo_scaled_font_glyph_extents (cairo_scaled_font_t   *scaled_font,
 	status = _cairo_scaled_glyph_lookup (scaled_font,
 					     glyphs[i].index,
 					     CAIRO_SCALED_GLYPH_INFO_METRICS,
-					     NULL, /* foreground color */
 					     &scaled_glyph);
 	if (unlikely (status)) {
-	    status = _cairo_scaled_font_set_error (scaled_font, status);
+	    if (status != CAIRO_INT_STATUS_UNSUPPORTED) {
+		status = _cairo_scaled_font_set_error (scaled_font, status);
+	    }
 	    goto UNLOCK;
 	}
 
@@ -1714,6 +1579,7 @@ ZERO_EXTENTS:
     extents->x_advance = 0.0;
     extents->y_advance = 0.0;
 }
+slim_hidden_def (cairo_scaled_font_glyph_extents);
 
 #define GLYPH_LUT_SIZE 64
 static cairo_status_t
@@ -1764,7 +1630,6 @@ cairo_scaled_font_text_to_glyphs_internal_cached (cairo_scaled_font_t		 *scaled_
 	    status = _cairo_scaled_glyph_lookup (scaled_font,
 						 g,
 						 CAIRO_SCALED_GLYPH_INFO_METRICS,
-						 NULL, /* foreground color */
 						 &scaled_glyph);
 	    if (unlikely (status))
 		return status;
@@ -1825,7 +1690,6 @@ cairo_scaled_font_text_to_glyphs_internal_uncached (cairo_scaled_font_t	 *scaled
 	    status = _cairo_scaled_glyph_lookup (scaled_font,
 					     g,
 					     CAIRO_SCALED_GLYPH_INFO_METRICS,
-					     NULL, /* foreground color */
 					     &scaled_glyph);
 	    if (unlikely (status))
 		return status;
@@ -1847,9 +1711,9 @@ cairo_scaled_font_text_to_glyphs_internal_uncached (cairo_scaled_font_t	 *scaled
 
 /**
  * cairo_scaled_font_text_to_glyphs:
- * @scaled_font: a #cairo_scaled_font_t
  * @x: X position to place first glyph
  * @y: Y position to place first glyph
+ * @scaled_font: a #cairo_scaled_font_t
  * @utf8: a string of text encoded in UTF-8
  * @utf8_len: length of @utf8 in bytes, or -1 if it is NUL-terminated
  * @glyphs: pointer to array of glyphs to fill
@@ -1994,7 +1858,7 @@ cairo_scaled_font_text_to_glyphs (cairo_scaled_font_t   *scaled_font,
 				  cairo_text_cluster_flags_t *cluster_flags)
 {
     int num_chars = 0;
-    cairo_int_status_t status;
+    cairo_status_t status;
     cairo_glyph_t *orig_glyphs;
     cairo_text_cluster_t *orig_clusters;
 
@@ -2077,7 +1941,7 @@ cairo_scaled_font_text_to_glyphs (cairo_scaled_font_t   *scaled_font,
 						       clusters, num_clusters,
 						       cluster_flags);
         if (status != CAIRO_INT_STATUS_UNSUPPORTED) {
-	    if (status == CAIRO_INT_STATUS_SUCCESS) {
+	    if (status == CAIRO_STATUS_SUCCESS) {
 	        /* The checks here are crude; we only should do them in
 		 * user-font backend, but they don't hurt here.  This stuff
 		 * can be hard to get right. */
@@ -2086,7 +1950,7 @@ cairo_scaled_font_text_to_glyphs (cairo_scaled_font_t   *scaled_font,
 		    status = _cairo_error (CAIRO_STATUS_NEGATIVE_COUNT);
 		    goto DONE;
 		}
-		if (*num_glyphs != 0 && *glyphs == NULL) {
+		if (num_glyphs && *glyphs == NULL) {
 		    status = _cairo_error (CAIRO_STATUS_NULL_POINTER);
 		    goto DONE;
 		}
@@ -2096,7 +1960,7 @@ cairo_scaled_font_text_to_glyphs (cairo_scaled_font_t   *scaled_font,
 			status = _cairo_error (CAIRO_STATUS_NEGATIVE_COUNT);
 			goto DONE;
 		    }
-		    if (*num_clusters != 0 && *clusters == NULL) {
+		    if (num_clusters && *clusters == NULL) {
 			status = _cairo_error (CAIRO_STATUS_NULL_POINTER);
 			goto DONE;
 		    }
@@ -2180,6 +2044,7 @@ cairo_scaled_font_text_to_glyphs (cairo_scaled_font_t   *scaled_font,
 
     return status;
 }
+slim_hidden_def (cairo_scaled_font_text_to_glyphs);
 
 static inline cairo_bool_t
 _range_contains_glyph (const cairo_box_t *extents,
@@ -2188,52 +2053,10 @@ _range_contains_glyph (const cairo_box_t *extents,
 		       cairo_fixed_t right,
 		       cairo_fixed_t bottom)
 {
-    if (left == right || top == bottom)
-	return FALSE;
-
     return right > extents->p1.x &&
 	   left < extents->p2.x &&
 	   bottom > extents->p1.y &&
 	   top < extents->p2.y;
-}
-
-static cairo_status_t
-_cairo_scaled_font_single_glyph_device_extents (cairo_scaled_font_t	 *scaled_font,
-						const cairo_glyph_t	 *glyph,
-						cairo_rectangle_int_t   *extents)
-{
-    cairo_scaled_glyph_t *scaled_glyph;
-    cairo_status_t status;
-
-    _cairo_scaled_font_freeze_cache (scaled_font);
-    status = _cairo_scaled_glyph_lookup (scaled_font,
-					 glyph->index,
-					 CAIRO_SCALED_GLYPH_INFO_METRICS,
-					 NULL, /* foreground color */
-					 &scaled_glyph);
-    if (likely (status == CAIRO_STATUS_SUCCESS)) {
-	cairo_bool_t round_xy = _cairo_font_options_get_round_glyph_positions (&scaled_font->options) == CAIRO_ROUND_GLYPH_POS_ON;
-	cairo_box_t box;
-	cairo_fixed_t v;
-
-	if (round_xy)
-	    v = _cairo_fixed_from_int (_cairo_lround (glyph->x));
-	else
-	    v = _cairo_fixed_from_double (glyph->x);
-	box.p1.x = v + scaled_glyph->bbox.p1.x;
-	box.p2.x = v + scaled_glyph->bbox.p2.x;
-
-	if (round_xy)
-	    v = _cairo_fixed_from_int (_cairo_lround (glyph->y));
-	else
-	    v = _cairo_fixed_from_double (glyph->y);
-	box.p1.y = v + scaled_glyph->bbox.p1.y;
-	box.p2.y = v + scaled_glyph->bbox.p2.y;
-
-	_cairo_box_round_to_rectangle (&box, extents);
-    }
-    _cairo_scaled_font_thaw_cache (scaled_font);
-    return status;
 }
 
 /*
@@ -2256,14 +2079,6 @@ _cairo_scaled_font_glyph_device_extents (cairo_scaled_font_t	 *scaled_font,
     if (unlikely (scaled_font->status))
 	return scaled_font->status;
 
-    if (num_glyphs == 1) {
-	if (overlap_out)
-	    *overlap_out = FALSE;
-	return _cairo_scaled_font_single_glyph_device_extents (scaled_font,
-							       glyphs,
-							       extents);
-    }
-
     _cairo_scaled_font_freeze_cache (scaled_font);
 
     memset (glyph_cache, 0, sizeof (glyph_cache));
@@ -2280,7 +2095,6 @@ _cairo_scaled_font_glyph_device_extents (cairo_scaled_font_t	 *scaled_font,
 	    status = _cairo_scaled_glyph_lookup (scaled_font,
 						 glyphs[i].index,
 						 CAIRO_SCALED_GLYPH_INFO_METRICS,
-						 NULL, /* foreground color */
 						 &scaled_glyph);
 	    if (unlikely (status))
 		break;
@@ -2328,28 +2142,17 @@ _cairo_scaled_font_glyph_device_extents (cairo_scaled_font_t	 *scaled_font,
     return CAIRO_STATUS_SUCCESS;
 }
 
-cairo_bool_t
+void
 _cairo_scaled_font_glyph_approximate_extents (cairo_scaled_font_t	 *scaled_font,
 					      const cairo_glyph_t	 *glyphs,
 					      int                      num_glyphs,
 					      cairo_rectangle_int_t   *extents)
 {
-    double x0, x1, y0, y1, pad;
+    double x0 = HUGE_VAL, x1 = -HUGE_VAL;
+    double y0 = HUGE_VAL, y1 = -HUGE_VAL;
     int i;
 
-    /* If any of the factors are suspect (i.e. the font is broken), bail */
-    if (scaled_font->fs_extents.max_x_advance == 0 ||
-	scaled_font->fs_extents.height == 0 ||
-	scaled_font->max_scale == 0)
-    {
-	return FALSE;
-    }
-
-    assert (num_glyphs);
-
-    x0 = x1 = glyphs[0].x;
-    y0 = y1 = glyphs[0].y;
-    for (i = 1; i < num_glyphs; i++) {
+    for (i = 0; i < num_glyphs; i++) {
 	double g;
 
 	g = glyphs[i].x;
@@ -2361,15 +2164,208 @@ _cairo_scaled_font_glyph_approximate_extents (cairo_scaled_font_t	 *scaled_font,
 	if (g > y1) y1 = g;
     }
 
-    pad = MAX(scaled_font->fs_extents.max_x_advance,
-	      scaled_font->fs_extents.height);
-    pad *= scaled_font->max_scale;
+    if (x0 <= x1 && y0 <= y1) {
+	extents->x = floor (x0 - scaled_font->extents.max_x_advance);
+	extents->width = ceil (x1 + scaled_font->extents.max_x_advance);
+	extents->width -= extents->x;
 
-    extents->x = floor (x0 - pad);
-    extents->width = ceil (x1 + pad) - extents->x;
-    extents->y = floor (y0 - pad);
-    extents->height = ceil (y1 + pad) - extents->y;
-    return TRUE;
+	extents->y = floor (y0 - scaled_font->extents.ascent);
+	extents->height = ceil (y1 + scaled_font->extents.descent);
+	extents->height -= extents->y;
+    } else {
+	extents->x = extents->y = 0;
+	extents->width = extents->height = 0;
+    }
+}
+
+cairo_status_t
+_cairo_scaled_font_show_glyphs (cairo_scaled_font_t	*scaled_font,
+				cairo_operator_t	 op,
+				const cairo_pattern_t	*pattern,
+				cairo_surface_t		*surface,
+				int			 source_x,
+				int			 source_y,
+				int			 dest_x,
+				int			 dest_y,
+				unsigned int		 width,
+				unsigned int		 height,
+				cairo_glyph_t		*glyphs,
+				int			 num_glyphs,
+				cairo_region_t		*clip_region)
+{
+    cairo_status_t status;
+    cairo_surface_t *mask = NULL;
+    cairo_format_t mask_format = CAIRO_FORMAT_A1; /* shut gcc up */
+    cairo_surface_pattern_t mask_pattern;
+    int i;
+
+    /* These operators aren't interpreted the same way by the backends;
+     * they are implemented in terms of other operators in cairo-gstate.c
+     */
+    assert (op != CAIRO_OPERATOR_SOURCE && op != CAIRO_OPERATOR_CLEAR);
+
+    if (scaled_font->status)
+	return scaled_font->status;
+
+    if (!num_glyphs)
+	return CAIRO_STATUS_SUCCESS;
+
+    if (scaled_font->backend->show_glyphs != NULL) {
+	int remaining_glyphs = num_glyphs;
+	status = scaled_font->backend->show_glyphs (scaled_font,
+						    op, pattern,
+						    surface,
+						    source_x, source_y,
+						    dest_x, dest_y,
+						    width, height,
+						    glyphs, num_glyphs,
+						    clip_region,
+						    &remaining_glyphs);
+	glyphs += num_glyphs - remaining_glyphs;
+	num_glyphs = remaining_glyphs;
+	if (remaining_glyphs == 0)
+	    status = CAIRO_STATUS_SUCCESS;
+	if (status != CAIRO_INT_STATUS_UNSUPPORTED)
+	    return _cairo_scaled_font_set_error (scaled_font, status);
+    }
+
+    /* Font display routine either does not exist or failed. */
+
+    _cairo_scaled_font_freeze_cache (scaled_font);
+
+    for (i = 0; i < num_glyphs; i++) {
+	int x, y;
+	cairo_image_surface_t *glyph_surface;
+	cairo_scaled_glyph_t *scaled_glyph;
+
+	status = _cairo_scaled_glyph_lookup (scaled_font,
+					     glyphs[i].index,
+					     CAIRO_SCALED_GLYPH_INFO_SURFACE,
+					     &scaled_glyph);
+
+	if (unlikely (status))
+	    goto CLEANUP_MASK;
+
+	glyph_surface = scaled_glyph->surface;
+
+	/* To start, create the mask using the format from the first
+	 * glyph. Later we'll deal with different formats. */
+	if (mask == NULL) {
+	    mask_format = glyph_surface->format;
+	    mask = cairo_image_surface_create (mask_format, width, height);
+	    status = mask->status;
+	    if (unlikely (status))
+		goto CLEANUP_MASK;
+	}
+
+	/* If we have glyphs of different formats, we "upgrade" the mask
+	 * to the wider of the formats. */
+	if (glyph_surface->format != mask_format &&
+	    _cairo_format_bits_per_pixel (mask_format) <
+	    _cairo_format_bits_per_pixel (glyph_surface->format) )
+	{
+	    cairo_surface_t *new_mask;
+
+	    switch (glyph_surface->format) {
+	    case CAIRO_FORMAT_ARGB32:
+	    case CAIRO_FORMAT_A8:
+	    case CAIRO_FORMAT_A1:
+		mask_format = glyph_surface->format;
+		break;
+	    case CAIRO_FORMAT_RGB16_565:
+	    case CAIRO_FORMAT_RGB24:
+	    case CAIRO_FORMAT_INVALID:
+	    default:
+		ASSERT_NOT_REACHED;
+		mask_format = CAIRO_FORMAT_ARGB32;
+		break;
+	    }
+
+	    new_mask = cairo_image_surface_create (mask_format, width, height);
+	    status = new_mask->status;
+	    if (unlikely (status)) {
+		cairo_surface_destroy (new_mask);
+		goto CLEANUP_MASK;
+	    }
+
+	    _cairo_pattern_init_for_surface (&mask_pattern, mask);
+	    /* Note that we only upgrade masks, i.e. A1 -> A8 -> ARGB32, so there is
+	     * never any component alpha here.
+	     */
+	    status = _cairo_surface_composite (CAIRO_OPERATOR_ADD,
+					       &_cairo_pattern_white.base,
+					       &mask_pattern.base,
+					       new_mask,
+					       0, 0,
+					       0, 0,
+					       0, 0,
+					       width, height,
+					       NULL);
+
+	    _cairo_pattern_fini (&mask_pattern.base);
+
+	    if (unlikely (status)) {
+		cairo_surface_destroy (new_mask);
+		goto CLEANUP_MASK;
+	    }
+
+	    cairo_surface_destroy (mask);
+	    mask = new_mask;
+	}
+
+	if (glyph_surface->width && glyph_surface->height) {
+	    cairo_surface_pattern_t glyph_pattern;
+
+	    /* round glyph locations to the nearest pixel */
+	    /* XXX: FRAGILE: We're ignoring device_transform scaling here. A bug? */
+	    x = _cairo_lround (glyphs[i].x -
+			       glyph_surface->base.device_transform.x0);
+	    y = _cairo_lround (glyphs[i].y -
+			       glyph_surface->base.device_transform.y0);
+
+	    _cairo_pattern_init_for_surface (&glyph_pattern,
+					     &glyph_surface->base);
+	    if (mask_format == CAIRO_FORMAT_ARGB32)
+		glyph_pattern.base.has_component_alpha = TRUE;
+
+	    status = _cairo_surface_composite (CAIRO_OPERATOR_ADD,
+					       &_cairo_pattern_white.base,
+					       &glyph_pattern.base,
+					       mask,
+					       0, 0,
+					       0, 0,
+					       x - dest_x, y - dest_y,
+					       glyph_surface->width,
+					       glyph_surface->height,
+					       NULL);
+
+	    _cairo_pattern_fini (&glyph_pattern.base);
+
+	    if (unlikely (status))
+		goto CLEANUP_MASK;
+	}
+    }
+
+    _cairo_pattern_init_for_surface (&mask_pattern, mask);
+    if (mask_format == CAIRO_FORMAT_ARGB32)
+	mask_pattern.base.has_component_alpha = TRUE;
+
+    status = _cairo_surface_composite (op, pattern, &mask_pattern.base,
+				       surface,
+				       source_x, source_y,
+				       0,        0,
+				       dest_x,   dest_y,
+				       width,    height,
+				       clip_region);
+
+    _cairo_pattern_fini (&mask_pattern.base);
+
+CLEANUP_MASK:
+    _cairo_scaled_font_thaw_cache (scaled_font);
+
+    if (mask != NULL)
+	cairo_surface_destroy (mask);
+    return _cairo_scaled_font_set_error (scaled_font, status);
 }
 
 /* Add a single-device-unit rectangle to a path. */
@@ -2483,7 +2479,7 @@ _cairo_scaled_font_glyph_path (cairo_scaled_font_t *scaled_font,
 			       int		    num_glyphs,
 			       cairo_path_fixed_t  *path)
 {
-    cairo_int_status_t status;
+    cairo_status_t status;
     int	i;
 
     status = scaled_font->status;
@@ -2497,11 +2493,10 @@ _cairo_scaled_font_glyph_path (cairo_scaled_font_t *scaled_font,
 	status = _cairo_scaled_glyph_lookup (scaled_font,
 					     glyphs[i].index,
 					     CAIRO_SCALED_GLYPH_INFO_PATH,
-					     NULL, /* foreground color */
 					     &scaled_glyph);
-	if (status == CAIRO_INT_STATUS_SUCCESS) {
+	if (status == CAIRO_STATUS_SUCCESS) {
 	    status = _cairo_path_fixed_append (path,
-					       scaled_glyph->path,
+					       scaled_glyph->path, CAIRO_DIRECTION_FORWARD,
 					       _cairo_fixed_from_double (glyphs[i].x),
 					       _cairo_fixed_from_double (glyphs[i].y));
 
@@ -2512,7 +2507,6 @@ _cairo_scaled_font_glyph_path (cairo_scaled_font_t *scaled_font,
 	    status = _cairo_scaled_glyph_lookup (scaled_font,
 						 glyphs[i].index,
 						 CAIRO_SCALED_GLYPH_INFO_SURFACE,
-						 NULL, /* foreground color */
 						 &scaled_glyph);
 	    if (unlikely (status))
 		goto BAIL;
@@ -2652,21 +2646,10 @@ _cairo_scaled_glyph_set_path (cairo_scaled_glyph_t *scaled_glyph,
 	scaled_glyph->has_info &= ~CAIRO_SCALED_GLYPH_INFO_PATH;
 }
 
-/**
- * _cairo_scaled_glyph_set_recording_surface:
- * @scaled_glyph: a #cairo_scaled_glyph_t
- * @scaled_font: a #cairo_scaled_font_t
- * @recording_surface: The recording surface
- * @foreground_color: The foreground color that was used to record the
- * glyph, or NULL if foreground color not required.
- *
- * Sets the surface that was used to record the glyph.
- **/
 void
 _cairo_scaled_glyph_set_recording_surface (cairo_scaled_glyph_t *scaled_glyph,
-					   cairo_scaled_font_t  *scaled_font,
-					   cairo_surface_t      *recording_surface,
-					   const cairo_color_t * foreground_color)
+					   cairo_scaled_font_t *scaled_font,
+					   cairo_surface_t *recording_surface)
 {
     if (scaled_glyph->recording_surface != NULL) {
 	cairo_surface_finish (scaled_glyph->recording_surface);
@@ -2674,9 +2657,6 @@ _cairo_scaled_glyph_set_recording_surface (cairo_scaled_glyph_t *scaled_glyph,
     }
 
     scaled_glyph->recording_surface = recording_surface;
-    scaled_glyph->recording_uses_foreground_color = foreground_color != NULL;
-    if (foreground_color)
-	scaled_glyph->foreground_color = *foreground_color;
 
     if (recording_surface != NULL)
 	scaled_glyph->has_info |= CAIRO_SCALED_GLYPH_INFO_RECORDING_SURFACE;
@@ -2684,59 +2664,14 @@ _cairo_scaled_glyph_set_recording_surface (cairo_scaled_glyph_t *scaled_glyph,
 	scaled_glyph->has_info &= ~CAIRO_SCALED_GLYPH_INFO_RECORDING_SURFACE;
 }
 
-/**
- * _cairo_scaled_glyph_set_color_surface:
- * @scaled_glyph: a #cairo_scaled_glyph_t
- * @scaled_font: a #cairo_scaled_font_t
- * @surface: The image surface
- * @foreground_marker_color: The foreground color that was used to
- * substitute the foreground_marker, or NULL if foreground_marker not
- * used when rendering the surface color.
- *
- * Sets the color surface of the glyph.
- **/
-void
-_cairo_scaled_glyph_set_color_surface (cairo_scaled_glyph_t  *scaled_glyph,
-	                               cairo_scaled_font_t   *scaled_font,
-	                               cairo_image_surface_t *surface,
-				       const cairo_color_t   *foreground_marker_color)
-{
-    if (scaled_glyph->color_surface != NULL)
-	cairo_surface_destroy (&scaled_glyph->color_surface->base);
-
-    /* sanity check the backend glyph contents */
-    _cairo_debug_check_image_surface_is_defined (&surface->base);
-    scaled_glyph->color_surface = surface;
-    scaled_glyph->recording_uses_foreground_marker = foreground_marker_color != NULL;
-    if (foreground_marker_color)
-	scaled_glyph->foreground_color = *foreground_marker_color;
-
-    if (surface != NULL)
-	scaled_glyph->has_info |= CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE;
-    else
-	scaled_glyph->has_info &= ~CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE;
-}
-
-/* _cairo_hash_table_random_entry () predicate. To avoid race conditions,
- * the font is locked when tested. The font is unlocked in
- * _cairo_scaled_glyph_page_pluck. */
 static cairo_bool_t
 _cairo_scaled_glyph_page_can_remove (const void *closure)
 {
     const cairo_scaled_glyph_page_t *page = closure;
-    cairo_scaled_font_t *scaled_font;
+    const cairo_scaled_font_t *scaled_font;
 
-    scaled_font = page->scaled_font;
-
-    if (!CAIRO_MUTEX_TRY_LOCK (scaled_font->mutex))
-       return FALSE;
-
-    if (scaled_font->cache_frozen != 0) {
-       CAIRO_MUTEX_UNLOCK (scaled_font->mutex);
-       return FALSE;
-    }
-
-    return TRUE;
+    scaled_font = (cairo_scaled_font_t *) page->cache_entry.hash;
+    return scaled_font->cache_frozen == 0;
 }
 
 static cairo_status_t
@@ -2745,8 +2680,6 @@ _cairo_scaled_font_allocate_glyph (cairo_scaled_font_t *scaled_font,
 {
     cairo_scaled_glyph_page_t *page;
     cairo_status_t status;
-
-    assert (scaled_font->cache_frozen);
 
     /* only the first page in the list may contain available slots */
     if (! cairo_list_is_empty (&scaled_font->glyph_pages)) {
@@ -2759,12 +2692,11 @@ _cairo_scaled_font_allocate_glyph (cairo_scaled_font_t *scaled_font,
         }
     }
 
-    page = _cairo_malloc (sizeof (cairo_scaled_glyph_page_t));
+    page = malloc (sizeof (cairo_scaled_glyph_page_t));
     if (unlikely (page == NULL))
 	return _cairo_error (CAIRO_STATUS_NO_MEMORY);
 
     page->cache_entry.hash = (uintptr_t) scaled_font;
-    page->scaled_font = scaled_font;
     page->cache_entry.size = 1; /* XXX occupancy weighting? */
     page->num_glyphs = 0;
 
@@ -2774,7 +2706,7 @@ _cairo_scaled_font_allocate_glyph (cairo_scaled_font_t *scaled_font,
 	    status = _cairo_cache_init (&cairo_scaled_glyph_page_cache,
 					NULL,
 					_cairo_scaled_glyph_page_can_remove,
-					_cairo_scaled_glyph_page_pluck,
+					_cairo_scaled_glyph_page_destroy,
 					MAX_GLYPH_PAGES_CACHED);
 	    if (unlikely (status)) {
 		CAIRO_MUTEX_UNLOCK (_cairo_scaled_glyph_page_cache_mutex);
@@ -2807,7 +2739,6 @@ _cairo_scaled_font_free_last_glyph (cairo_scaled_font_t *scaled_font,
 {
     cairo_scaled_glyph_page_t *page;
 
-    assert (scaled_font->cache_frozen);
     assert (! cairo_list_is_empty (&scaled_font->glyph_pages));
     page = cairo_list_last_entry (&scaled_font->glyph_pages,
                                   cairo_scaled_glyph_page_t,
@@ -2817,20 +2748,8 @@ _cairo_scaled_font_free_last_glyph (cairo_scaled_font_t *scaled_font,
     _cairo_scaled_glyph_fini (scaled_font, scaled_glyph);
 
     if (--page->num_glyphs == 0) {
-	_cairo_scaled_font_thaw_cache (scaled_font);
-	CAIRO_MUTEX_LOCK (scaled_font->mutex);
-
-	CAIRO_MUTEX_LOCK (_cairo_scaled_glyph_page_cache_mutex);
-	/* Temporarily disconnect callback to avoid recursive locking */
-	cairo_scaled_glyph_page_cache.entry_destroy = NULL;
 	_cairo_cache_remove (&cairo_scaled_glyph_page_cache,
 		             &page->cache_entry);
-	_cairo_scaled_glyph_page_destroy (scaled_font, page);
-	cairo_scaled_glyph_page_cache.entry_destroy = _cairo_scaled_glyph_page_pluck;
-	CAIRO_MUTEX_UNLOCK (_cairo_scaled_glyph_page_cache_mutex);
-
-	CAIRO_MUTEX_UNLOCK (scaled_font->mutex);
-	_cairo_scaled_font_freeze_cache (scaled_font);
     }
 }
 
@@ -2840,11 +2759,6 @@ _cairo_scaled_font_free_last_glyph (cairo_scaled_font_t *scaled_font,
  * @index: the glyph to create
  * @info: a #cairo_scaled_glyph_info_t marking which portions of
  * the glyph should be filled in.
- * @foreground_color - foreground color to use when rendering color
- * fonts. Use NULL if not requesting
- * CAIRO_SCALED_GLYPH_INFO_RECORDING_SURFACE or
- * CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE, or foreground color is
- * unknown.
  * @scaled_glyph_ret: a #cairo_scaled_glyph_t where the glyph
  * is returned.
  *
@@ -2865,40 +2779,30 @@ _cairo_scaled_font_free_last_glyph (cairo_scaled_font_t *scaled_font,
  *  %CAIRO_SCALED_GLYPH_INFO_METRICS - glyph metrics and bounding box
  *  %CAIRO_SCALED_GLYPH_INFO_SURFACE - surface holding glyph image
  *  %CAIRO_SCALED_GLYPH_INFO_PATH - path holding glyph outline in device space
- *  %CAIRO_SCALED_GLYPH_INFO_RECORDING_SURFACE - surface holding recording of glyph
- *  %CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE - surface holding color glyph image
  **/
 cairo_int_status_t
 _cairo_scaled_glyph_lookup (cairo_scaled_font_t *scaled_font,
 			    unsigned long index,
 			    cairo_scaled_glyph_info_t info,
-			    const cairo_color_t   *foreground_color,
 			    cairo_scaled_glyph_t **scaled_glyph_ret)
 {
-    cairo_int_status_t		 status = CAIRO_INT_STATUS_SUCCESS;
+    cairo_status_t		 status = CAIRO_STATUS_SUCCESS;
     cairo_scaled_glyph_t	*scaled_glyph;
     cairo_scaled_glyph_info_t	 need_info;
-    cairo_hash_entry_t           key;
 
     *scaled_glyph_ret = NULL;
 
     if (unlikely (scaled_font->status))
 	return scaled_font->status;
 
-    assert (CAIRO_MUTEX_IS_LOCKED(scaled_font->mutex));
-    assert (scaled_font->cache_frozen);
-
     if (CAIRO_INJECT_FAULT ())
 	return _cairo_error (CAIRO_STATUS_NO_MEMORY);
-
-    if (foreground_color == NULL)
-	foreground_color = CAIRO_COLOR_BLACK;
 
     /*
      * Check cache for glyph
      */
-    key.hash = index;
-    scaled_glyph = _cairo_hash_table_lookup (scaled_font->glyphs, &key);
+    scaled_glyph = _cairo_hash_table_lookup (scaled_font->glyphs,
+					     (cairo_hash_entry_t *) &index);
     if (scaled_glyph == NULL) {
 	status = _cairo_scaled_font_allocate_glyph (scaled_font, &scaled_glyph);
 	if (unlikely (status))
@@ -2906,14 +2810,12 @@ _cairo_scaled_glyph_lookup (cairo_scaled_font_t *scaled_font,
 
 	memset (scaled_glyph, 0, sizeof (cairo_scaled_glyph_t));
 	_cairo_scaled_glyph_set_index (scaled_glyph, index);
-	cairo_list_init (&scaled_glyph->dev_privates);
 
 	/* ask backend to initialize metrics and shape fields */
 	status =
 	    scaled_font->backend->scaled_glyph_init (scaled_font,
 						     scaled_glyph,
-						     info | CAIRO_SCALED_GLYPH_INFO_METRICS,
-						     foreground_color);
+						     info | CAIRO_SCALED_GLYPH_INFO_METRICS);
 	if (unlikely (status)) {
 	    _cairo_scaled_font_free_last_glyph (scaled_font, scaled_glyph);
 	    goto err;
@@ -2932,37 +2834,10 @@ _cairo_scaled_glyph_lookup (cairo_scaled_font_t *scaled_font,
      * already has the requested data and amend it if not
      */
     need_info = info & ~scaled_glyph->has_info;
-
-    /* If this is not a color glyph, don't try loading the color surface again. */
-    if ((need_info & CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE) &&
-	scaled_glyph->color_glyph_set && !scaled_glyph->color_glyph)
-	return CAIRO_INT_STATUS_UNSUPPORTED;
-
-    /* If requesting a color surface or recording for a glyph that has
-     * used the foreground color to render the recording, and the
-     * foreground color has changed, request a new  recording. */
-    if ((info & (CAIRO_SCALED_GLYPH_INFO_RECORDING_SURFACE | CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE)) &&
-	scaled_glyph->recording_uses_foreground_color &&
-	!_cairo_color_equal (foreground_color, &scaled_glyph->foreground_color))
-    {
-	need_info |= CAIRO_SCALED_GLYPH_INFO_RECORDING_SURFACE;
-    }
-
-    /* If requesting a color surface for a glyph that has
-     * used the foreground color to render the color_surface, and the
-     * foreground color has changed, request a new image. */
-    if (info & CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE &&
-	(scaled_glyph->recording_uses_foreground_marker || scaled_glyph->recording_uses_foreground_color) &&
-	!_cairo_color_equal (foreground_color, &scaled_glyph->foreground_color))
-    {
-	    need_info |= CAIRO_SCALED_GLYPH_INFO_COLOR_SURFACE;
-    }
-
     if (need_info) {
 	status = scaled_font->backend->scaled_glyph_init (scaled_font,
 							  scaled_glyph,
-							  need_info,
-							  foreground_color);
+							  need_info);
 	if (unlikely (status))
 	    goto err;
 
@@ -2990,17 +2865,16 @@ _cairo_scaled_font_get_max_scale (cairo_scaled_font_t *scaled_font)
     return scaled_font->max_scale;
 }
 
+
 /**
  * cairo_scaled_font_get_font_face:
  * @scaled_font: a #cairo_scaled_font_t
  *
- * Gets the font face that this scaled font uses.  This might be the
- * font face passed to cairo_scaled_font_create(), but this does not
- * hold true for all possible cases.
+ * Gets the font face that this scaled font uses.  This is the
+ * font face passed to cairo_scaled_font_create().
  *
  * Return value: The #cairo_font_face_t with which @scaled_font was
- * created.  This object is owned by cairo. To keep a reference to it,
- * you must call cairo_scaled_font_reference().
+ * created.
  *
  * Since: 1.2
  **/
@@ -3015,6 +2889,7 @@ cairo_scaled_font_get_font_face (cairo_scaled_font_t *scaled_font)
 
     return scaled_font->font_face;
 }
+slim_hidden_def (cairo_scaled_font_get_font_face);
 
 /**
  * cairo_scaled_font_get_font_matrix:
@@ -3037,6 +2912,7 @@ cairo_scaled_font_get_font_matrix (cairo_scaled_font_t	*scaled_font,
 
     *font_matrix = scaled_font->font_matrix;
 }
+slim_hidden_def (cairo_scaled_font_get_font_matrix);
 
 /**
  * cairo_scaled_font_get_ctm:
@@ -3061,6 +2937,7 @@ cairo_scaled_font_get_ctm (cairo_scaled_font_t	*scaled_font,
 
     *ctm = scaled_font->ctm;
 }
+slim_hidden_def (cairo_scaled_font_get_ctm);
 
 /**
  * cairo_scaled_font_get_scale_matrix:
@@ -3108,15 +2985,26 @@ cairo_scaled_font_get_font_options (cairo_scaled_font_t		*scaled_font,
 	return;
     }
 
-    _cairo_font_options_fini (options);
     _cairo_font_options_init_copy (options, &scaled_font->options);
 }
+slim_hidden_def (cairo_scaled_font_get_font_options);
 
-cairo_bool_t
-_cairo_scaled_font_has_color_glyphs (cairo_scaled_font_t *scaled_font)
+/**
+ * cairo_scaled_font_get_hint_metrics:
+ * @scaled_font: a #cairo_scaled_font_t
+ *
+ * Mozilla extension since the required malloc/free to use
+ * cairo_scaled_font_get_font_options() above is too slow.
+ **/
+cairo_public cairo_hint_metrics_t
+cairo_scaled_font_get_hint_metrics (cairo_scaled_font_t		*scaled_font)
 {
-    if (scaled_font->backend != NULL && scaled_font->backend->has_color_glyphs != NULL)
-        return scaled_font->backend->has_color_glyphs (scaled_font);
-    else
-       return FALSE;
+    cairo_font_options_t options;
+    if (scaled_font->status) {
+	_cairo_font_options_init_default (&options);
+    } else {
+	_cairo_font_options_init_copy (&options, &scaled_font->options);
+    }
+    return options.hint_metrics;
 }
+slim_hidden_def (cairo_scaled_font_get_hint_metrics);

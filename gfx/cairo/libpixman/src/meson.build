@@ -20,7 +20,7 @@
 
 config_h = configure_file(
   configuration : config,
-  output : 'pixman-config.h'
+  output : 'config.h'
 )
 
 version_h = configure_file(
@@ -31,8 +31,7 @@ version_h = configure_file(
 )
 
 libpixman_extra_cargs = []
-default_library = get_option('default_library')
-if default_library != 'static' and cc.has_function_attribute('dllexport')
+if cc.has_function_attribute('dllexport')
   libpixman_extra_cargs = ['-DPIXMAN_API=__declspec(dllexport)']
 endif
 
@@ -55,8 +54,6 @@ simds = [
    ['pixman-arm-simd-asm.S', 'pixman-arm-simd-asm-scaled.S']],
   ['arm-neon', have_neon, [],
    ['pixman-arm-neon-asm.S', 'pixman-arm-neon-asm-bilinear.S']],
-  ['arm-neon', have_a64neon, [],
-   ['pixman-arma64-neon-asm.S', 'pixman-arma64-neon-asm-bilinear.S']],
   ['mips-dspr2', have_mips_dspr2, mips_dspr2_flags,
    ['pixman-mips-dspr2-asm.S', 'pixman-mips-memcpy-asm.S']],
 ]
@@ -105,26 +102,19 @@ pixman_files = files(
   'pixman-utils.c',
 )
 
-# Android cpu-features
-cpu_features_path = get_option('cpu-features-path')
-cpu_features_sources = []
-cpu_features_inc = []
-if cpu_features_path != ''
-  message('Using cpu-features.[ch] from ' + cpu_features_path)
-  cpu_features_sources = files(
-    cpu_features_path / 'cpu-features.h',
-    cpu_features_path / 'cpu-features.c',
-  )
-  cpu_features_inc = include_directories(cpu_features_path)
-endif
+# We cannot use 'link_with' or 'link_whole' because meson wont do the right
+# thing for static archives.
+_obs = []
+foreach l : pixman_simd_libs
+  _obs += l.extract_all_objects()
+endforeach
 
 libpixman = library(
   'pixman-1',
-  [pixman_files, config_h, version_h, cpu_features_sources],
-  link_with: pixman_simd_libs,
+  [pixman_files, config_h, version_h],
+  objects : _obs,
   c_args : libpixman_extra_cargs,
   dependencies : [dep_m, dep_threads],
-  include_directories : cpu_features_inc,
   version : meson.project_version(),
   install : true,
 )
@@ -135,9 +125,5 @@ idep_pixman = declare_dependency(
   link_with: libpixman,
   include_directories : inc_pixman,
 )
-
-if meson.version().version_compare('>= 0.54.0')
-  meson.override_dependency('pixman-1', idep_pixman)
-endif
 
 install_headers('pixman.h', subdir : 'pixman-1')

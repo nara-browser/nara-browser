@@ -20,7 +20,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #ifdef HAVE_CONFIG_H
-#include <pixman-config.h>
+#include <config.h>
 #endif
 
 #include "pixman-private.h"
@@ -244,12 +244,6 @@ _pixman_arm_get_implementations (pixman_implementation_t *imp)
 #ifdef USE_ARM_NEON
     if (!_pixman_disabled ("arm-neon") && have_feature (ARM_NEON))
 	imp = _pixman_implementation_create_arm_neon (imp);
-#endif
-
-#ifdef USE_ARM_A64_NEON
-    /* neon is a part of aarch64 */
-    if (!_pixman_disabled ("arm-neon"))
-        imp = _pixman_implementation_create_arm_neon (imp);
 #endif
 
     return imp;

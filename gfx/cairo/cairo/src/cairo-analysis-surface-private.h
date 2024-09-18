@@ -37,9 +37,10 @@
 
 #include "cairoint.h"
 
+CAIRO_BEGIN_DECLS
+
 cairo_private cairo_surface_t *
-_cairo_analysis_surface_create (cairo_surface_t		*target,
-				cairo_bool_t             create_region_ids);
+_cairo_analysis_surface_create (cairo_surface_t		*target);
 
 cairo_private void
 _cairo_analysis_surface_set_ctm (cairo_surface_t *surface,
@@ -65,23 +66,10 @@ cairo_private void
 _cairo_analysis_surface_get_bounding_box (cairo_surface_t *surface,
 					  cairo_box_t     *bbox);
 
-cairo_private unsigned int
-_cairo_analysis_surface_get_source_region_id (cairo_surface_t *surface);
-
-cairo_private unsigned int
-_cairo_analysis_surface_get_mask_region_id (cairo_surface_t *surface);
-
 cairo_private cairo_int_status_t
 _cairo_analysis_surface_merge_status (cairo_int_status_t status_a,
 				      cairo_int_status_t status_b);
 
-cairo_private cairo_surface_t *
-_cairo_null_surface_create (cairo_content_t content);
-
-static inline cairo_bool_t
-_cairo_surface_is_analysis (const cairo_surface_t *surface)
-{
-    return (cairo_internal_surface_type_t)surface->backend->type == CAIRO_INTERNAL_SURFACE_TYPE_ANALYSIS;
-}
+CAIRO_END_DECLS
 
 #endif /* CAIRO_ANALYSIS_SURFACE_H */
