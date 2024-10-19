@@ -62,6 +62,20 @@ gfxQuartzSurface::gfxQuartzSurface(cairo_surface_t* csurf,
   Init(csurf, true);
 }
 
+already_AddRefed<gfxASurface> gfxQuartzSurface::CreateSimilarSurface(
+    gfxContentType aType, const mozilla::gfx::IntSize& aSize) {
+  cairo_surface_t* surface = cairo_quartz_surface_create_cg_layer(
+      mSurface, (cairo_content_t)aType, aSize.width, aSize.height);
+  if (cairo_surface_status(surface)) {
+    cairo_surface_destroy(surface);
+    return nullptr;
+  }
+
+  RefPtr<gfxASurface> result = Wrap(surface, aSize);
+  cairo_surface_destroy(surface);
+  return result.forget();
+}
+
 already_AddRefed<gfxImageSurface> gfxQuartzSurface::GetAsImageSurface() {
   cairo_surface_t* surface = cairo_quartz_surface_get_image(mSurface);
   if (!surface || cairo_surface_status(surface)) return nullptr;

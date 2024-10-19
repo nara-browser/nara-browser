@@ -59,11 +59,6 @@ class DrawTargetCairo final : public DrawTarget {
     return BackendType::CAIRO;
   }
 
-  virtual void Link(const char* aDest, const char* aURI,
-                    const Rect& aRect) override;
-  virtual void Destination(const char* aDestination,
-                           const Point& aPoint) override;
-
   virtual already_AddRefed<SourceSurface> Snapshot() override;
   virtual IntSize GetSize() const override;
 

@@ -64,7 +64,7 @@ SOURCES += [
 # We allow warnings for third-party code that can be updated from upstream.
 AllowCompilerWarnings()
 
-FINAL_LIBRARY = 'gkmedias'
+FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../../cairo/src',
 ]
@@ -89,19 +89,19 @@ use_arm_simd_gcc = False
 use_arm_neon_gcc = False
 if CONFIG['INTEL_ARCHITECTURE']:
     use_sse2 = True
-    if CONFIG['CPU_ARCH'] == 'x86':
+    if CONFIG['TARGET_CPU'] == 'x86':
         if CONFIG['CC_TYPE'] == 'clang-cl':
             use_mmx = True
     if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
         use_mmx = True
-elif CONFIG['CPU_ARCH'] in ('ppc', 'ppc64'):
+elif CONFIG['TARGET_CPU'] in ('ppc', 'ppc64'):
     if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
         use_vmx = True
 # Apple's arm assembler doesn't support the same syntax as
 # the standard GNU assembler, so use the C fallback paths for now.
 # This may be fixable if clang's ARM/iOS assembler improves into a
 # viable solution in the future.
-elif CONFIG['CPU_ARCH'] == 'arm':
+elif CONFIG['TARGET_CPU'] == 'arm':
     if CONFIG['OS_ARCH'] != 'Darwin':
         if CONFIG['HAVE_ARM_SIMD']:
             use_arm_simd_gcc = True

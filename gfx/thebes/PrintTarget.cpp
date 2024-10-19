@@ -108,13 +108,10 @@ already_AddRefed<DrawTarget> PrintTarget::GetReferenceDrawTarget() {
 #endif
 #ifdef CAIRO_HAS_QUARTZ_SURFACE
       case CAIRO_SURFACE_TYPE_QUARTZ:
-        if (StaticPrefs::gfx_cairo_quartz_cg_layer_enabled()) {
-          similar = cairo_quartz_surface_create_cg_layer(
-              mCairoSurface, cairo_surface_get_content(mCairoSurface),
-              size.width, size.height);
-          break;
-        }
-        [[fallthrough]];
+        similar = cairo_quartz_surface_create_cg_layer(
+            mCairoSurface, cairo_surface_get_content(mCairoSurface), size.width,
+            size.height);
+        break;
 #endif
       default:
         similar = cairo_surface_create_similar(
