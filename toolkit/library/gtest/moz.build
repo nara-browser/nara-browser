@@ -22,7 +22,7 @@ if CONFIG["ENABLE_TESTS"]:
         "libxul_missing_buildid",
     ]
 
-    UNIFIED_SOURCES = [
+    UNIFIED_SOURCES += [
         "TestBuildIDReader.cpp",
     ]
 
